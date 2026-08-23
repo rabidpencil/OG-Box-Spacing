@@ -245,7 +245,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
   <p class="note" id="storeNote"></p>
 </section>
 
-<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-08-23d</span> · <span id="offline">checking offline…</span></footer>
+<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-08-23f</span> · <span id="offline">checking offline…</span></footer>
 </div>
 
 <script>
@@ -409,19 +409,26 @@ function optionsFor(r, u){
 }
 
 /* ============================ wall editor + answers ============================ */
+const RUN_PAINT = [];
+/* Redraw only the computed parts. Never touches the input elements, so typing
+   in a field can't blow away the field you're typing in. */
+function renderAnswers(){
+  RUN_PAINT.forEach(function(f){ f(); });
+  renderLayout();
+}
 function bindObNum(inp, o, key){
   inp.value = fmtFrac(o[key]);
   inp.oninput = function(){
     const v = parseMeasure(inp.value);
     inp.classList.toggle("bad", v === null && inp.value.trim() !== "");
-    if(v !== null){ o[key] = v; refresh(); }
+    if(v !== null){ o[key] = v; renderAnswers(); }
   };
   inp.onblur = function(){ const v = parseMeasure(inp.value); if(v !== null) inp.value = fmtFrac(v); };
 }
 function renderRuns(){
   const host = $("runs");
   host.innerHTML = "";
-  const u = units();
+  RUN_PAINT.length = 0;
 
   state.runs.forEach(function(run, i){
     const card = document.createElement("div");
@@ -435,12 +442,12 @@ function renderRuns(){
       '<button type="button" class="kill" aria-label="remove wall">&times;</button>';
     const nm = top.querySelector(".rn"), ln = top.querySelector(".rl");
     nm.value = run.name;
-    nm.oninput = function(){ run.name = nm.value; };
+    nm.oninput = function(){ run.name = nm.value; renderLayout(); };
     ln.value = fmtFrac(run.L);
     ln.oninput = function(){
       const v = parseMeasure(ln.value);
       ln.classList.toggle("bad", v === null && ln.value.trim() !== "");
-      if(v !== null && v > 0){ run.L = v; run.pick = null; refresh(); }
+      if(v !== null && v > 0){ run.L = v; run.pick = null; renderAnswers(); }
     };
     ln.onblur = function(){ const v = parseMeasure(ln.value); if(v !== null) ln.value = fmtFrac(v); };
     top.querySelector(".kill").onclick = function(){ state.runs.splice(i, 1); refresh(); };
@@ -523,42 +530,53 @@ function renderRuns(){
     card.appendChild(acts);
 
     // ---- what this wall can do ----
-    const opts = optionsFor(prepRun(run, u), u);
-    const shown = opts.filter(function(o){ return o.inBand; });
     const box = document.createElement("div");
     box.className = "opts";
-    if(!shown.length){
-      const p = document.createElement("p");
-      p.className = "note";
-      p.textContent = opts.length
-        ? "Every box count on this wall falls outside the width limits. Widen them to see the rest."
-        : "Give this wall a length.";
-      box.appendChild(p);
-    }
-    shown.forEach(function(o){
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "opt" + (o.blocked ? " blocked" : "");
-      b.setAttribute("aria-pressed", String(run.pick === o.N));
-      let why;
-      if(o.blocked === "rail"){
-        why = "plate crosses a rail<br>move the box up or down";
-      } else if(o.blocked === "stile"){
-        why = o.clears ? ("stile on a plate<br>clears with a " + fmtFrac(o.clears / u.U, u.U) + '" slide')
-                       : "stile on a plate";
-      } else if(o.slid){
-        why = "slid " + fmtFrac(Math.abs(o.slid) / u.U, u.U) + '" ' + (o.slid < 0 ? "left" : "right") + "<br>to clear an outlet";
-      } else {
-        why = fmtFrac(o.mL / u.U, u.U) + '" / ' + fmtFrac(o.mR / u.U, u.U) + '" ends';
-      }
-      b.innerHTML =
-        '<span class="cnt">' + o.N + '</span>' +
-        '<span><span class="w">' + fmtFrac(o.W / u.U, u.U) + '"</span> wide</span>' +
-        '<span class="why">' + why + "</span>";
-      if(!o.blocked) b.onclick = function(){ run.pick = (run.pick === o.N ? null : o.N); refresh(); };
-      box.appendChild(b);
-    });
     card.appendChild(box);
+
+    function paint(){
+      const uu = units();
+      const opts = optionsFor(prepRun(run, uu), uu);
+      const shown = opts.filter(function(o){ return o.inBand; });
+      box.innerHTML = "";
+      if(!shown.length){
+        const p = document.createElement("p");
+        p.className = "note";
+        p.textContent = opts.length
+          ? "Every box count on this wall falls outside the width limits. Widen them to see the rest."
+          : "Give this wall a length.";
+        box.appendChild(p);
+        return;
+      }
+      shown.forEach(function(o){
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "opt" + (o.blocked ? " blocked" : "");
+        b.setAttribute("aria-pressed", String(run.pick === o.N));
+        let why;
+        if(o.blocked === "rail"){
+          why = "plate crosses a rail<br>move the box up or down";
+        } else if(o.blocked === "stile"){
+          why = o.clears ? ("stile on a plate<br>clears with a " + fmtFrac(o.clears / uu.U, uu.U) + '" slide')
+                         : "stile on a plate";
+        } else if(o.slid){
+          why = "slid " + fmtFrac(Math.abs(o.slid) / uu.U, uu.U) + '" ' + (o.slid < 0 ? "left" : "right") + "<br>to clear an outlet";
+        } else {
+          why = fmtFrac(o.mL / uu.U, uu.U) + '" / ' + fmtFrac(o.mR / uu.U, uu.U) + '" ends';
+        }
+        b.innerHTML =
+          '<span class="cnt">' + o.N + '</span>' +
+          '<span><span class="w">' + fmtFrac(o.W / uu.U, uu.U) + '"</span> wide</span>' +
+          '<span class="why">' + why + "</span>";
+        if(!o.blocked) b.onclick = function(){
+          run.pick = (run.pick === o.N ? null : o.N);
+          renderAnswers();
+        };
+        box.appendChild(b);
+      });
+    }
+    RUN_PAINT.push(paint);
+    paint();
     host.appendChild(card);
   });
 
@@ -684,7 +702,7 @@ function drawRun(r, o, u){
   const host = document.createElement("div");
   host.className = "pole";
   const Lin = r.L / U, Win = o.W / U, gIn = u.g / U;
-  const SVGW = 344, padX = 10, padTop = 8, padBot = 22;
+  const SVGW = 344, padX = 10, padTop = 8, padBot = 32;
   const sx = Math.min(4.5, (SVGW - padX * 2) / Lin);
   const drawW = Lin * sx, x0 = (SVGW - drawW) / 2;
   const topIn = Math.max(state.boxBottom + state.boxH + 4, state.baseH + 4);
@@ -725,11 +743,28 @@ function drawRun(r, o, u){
   marks.forEach(function(m){
     s += '<line x1="' + X(m) + '" y1="' + (dimY - 3) + '" x2="' + X(m) + '" y2="' + (dimY + 3) + '" stroke="#B08D14" stroke-width="1"/>';
   });
-  s += '<text x="' + X(o.mL / U / 2) + '" y="' + (dimY + 11) + '" font-family="ui-monospace,monospace" font-size="7.5" fill="#8A949E" text-anchor="middle">' + fmtFrac(o.mL / U, U) + "</text>";
-  s += '<text x="' + X(o.mL / U + Win / 2) + '" y="' + (dimY + 11) + '" font-family="ui-monospace,monospace" font-size="8" font-weight="600" fill="#B08D14" text-anchor="middle">' + fmtFrac(Win, U) + "</text>";
-  if(o.N > 1){
-    s += '<text x="' + X(o.mL / U + Win + gIn / 2) + '" y="' + (dimY + 11) + '" font-family="ui-monospace,monospace" font-size="7.5" fill="#8A949E" text-anchor="middle">' + fmtFrac(gIn, U) + "</text>";
+
+  // Only label a span if the text will actually fit inside it, and keep the
+  // baseline clear of the bottom edge so descenders aren't sliced off.
+  const textY = dimY + 12;
+  function span(fromIn, sizeIn, txt, px, weight, color, force){
+    const room = sizeIn * sx;
+    const need = function(size){ return txt.length * size * 0.62 + 4; };
+    if(room < need(px)){
+      if(!force) return "";
+      // The box width is the number he's actually after — shrink it rather
+      // than drop it on a long wall where everything is scaled down.
+      while(px > 6 && room < need(px)) px -= 0.5;
+    }
+    let cx = X(fromIn + sizeIn / 2);
+    cx = Math.max(4, Math.min(SVGW - 4, cx));
+    return '<text x="' + cx + '" y="' + textY + '" font-family="ui-monospace,monospace" font-size="' + px +
+           '" font-weight="' + weight + '" fill="' + color + '" text-anchor="middle">' + txt + "</text>";
   }
+  s += span(0, o.mL / U, fmtFrac(o.mL / U, U), 7.5, 400, "#8A949E");
+  s += span(o.mL / U, Win, fmtFrac(Win, U), 8.5, 600, "#B08D14", true);
+  if(o.N > 1) s += span(o.mL / U + Win, gIn, fmtFrac(gIn, U), 7.5, 400, "#8A949E");
+  s += span(Lin - o.mR / U, o.mR / U, fmtFrac(o.mR / U, U), 7.5, 400, "#8A949E");
   s += "</svg>";
   host.innerHTML = s;
   return host;

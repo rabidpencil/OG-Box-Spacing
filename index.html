@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EDEFE9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Chalk Line — OG box layout</title>
+<style>
+:root{
+  --paper:#EDEFE9; --surface:#F7F8F3;
+  --ink:#16202A; --ink-2:#5C6874; --ink-3:#8A949E;
+  --rule:#C8CEC4; --rule-soft:#DDE2D8;
+  --chalk:#1F5FA8; --chalk-soft:#DDE7F3;
+  --pencil:#B08D14; --pencil-soft:#F1E7C4;
+  --bad:#A6382C; --bad-soft:#F3DEDA;
+  --good:#2F6B4F; --good-soft:#DFEAE2;
+  --r:10px;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "Roboto Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  background-image:
+    linear-gradient(to right, rgba(31,95,168,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(31,95,168,.055) 1px, transparent 1px);
+  background-size:16px 16px;
+  color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.45;
+  -webkit-text-size-adjust:100%;padding:0 0 96px;
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+header.top{padding:22px 0 16px;border-bottom:2px solid var(--ink);margin-bottom:18px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h1{font-size:26px;line-height:1;margin:0;letter-spacing:-.02em;font-weight:800}
+.brand .sub{color:var(--ink-2);font-size:14px}
+.rulebox{margin-top:12px;font-family:var(--mono);font-size:13px;color:var(--chalk);
+  background:var(--chalk-soft);border-left:3px solid var(--chalk);padding:8px 10px;border-radius:0 6px 6px 0}
+
+section.panel{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--rule-soft)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:420px){ .grid2{grid-template-columns:1fr} .grid3{grid-template-columns:1fr 1fr} }
+label.f{display:block}
+label.f > .lab, .f > .lab{display:block;font-size:12px;color:var(--ink-2);margin:0 0 4px}
+.stepper{display:flex;align-items:stretch}
+.stepper button{width:36px;flex:0 0 36px;border:1px solid var(--rule);background:#fff;color:var(--ink-2);
+  font-size:19px;line-height:1;font-family:var(--mono);cursor:pointer}
+.stepper button:first-child{border-radius:8px 0 0 8px}
+.stepper button:last-child{border-radius:0 8px 8px 0}
+.stepper button:active{background:var(--chalk-soft)}
+.stepper input{border-radius:0;border-left:0;border-right:0;flex:1;min-width:0}
+input[type=text]{font-family:var(--mono);font-size:17px;padding:9px 10px;width:100%;
+  border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink)}
+input[type=text]:focus, button:focus-visible, select:focus{outline:2px solid var(--chalk);outline-offset:1px}
+input.bad{border-color:var(--bad);background:var(--bad-soft)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:#fff}
+.seg button{flex:1;padding:8px 5px;border:0;background:#fff;color:var(--ink-2);font-family:var(--ui);font-size:13px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff;font-weight:600}
+.seg.tiny button{font-size:12px;padding:7px 4px}
+.btn{font-family:var(--ui);font-size:14px;padding:9px 14px;border-radius:8px;border:1px solid var(--rule);background:#fff;color:var(--ink);cursor:pointer}
+.btn:active{background:var(--chalk-soft)}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+.btn.sm{padding:5px 9px;font-size:13px}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.note{font-size:12.5px;color:var(--ink-2);margin:8px 0 0}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.toggle input{width:18px;height:18px;accent-color:var(--chalk)}
+
+.runcard{background:#fff;border:1px solid var(--rule-soft);border-radius:8px;padding:10px;margin-bottom:10px}
+.runtop{display:grid;grid-template-columns:minmax(0,1fr) 100px 26px;gap:8px;align-items:end}
+.runtop .kill,.obrow .kill{border:0;background:transparent;color:var(--ink-3);line-height:1;cursor:pointer}
+.runtop .kill{font-size:20px;padding:4px}
+.runtop .kill:hover{color:var(--bad)}
+.ends{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.obhead,.obrow{display:grid;grid-template-columns:minmax(0,1fr) 62px 22px;gap:5px;align-items:center}
+.obhead{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-top:10px}
+.obwrap{border:1px solid var(--rule-soft);border-radius:8px;padding:7px;margin-top:6px;background:var(--surface)}
+.obrow input{font-size:14px;padding:6px}
+.obrow .kill{font-size:17px;padding:2px}
+.obrow2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.obfield{display:flex;flex-direction:column;gap:3px;min-width:0}
+.mini{font-size:10px;color:var(--ink-3);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.obline{display:flex;gap:4px;min-width:0}
+.obline .seg{flex:0 0 66px}
+.obline input{flex:1;min-width:0;font-size:14px;padding:6px}
+.seg.xs button{font-size:11px;padding:6px 2px}
+
+.opts{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.opt{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font-family:var(--mono);font-size:13px;
+  border:1px solid var(--rule);background:#fff;border-radius:8px;padding:8px 10px;cursor:pointer}
+.opt[aria-pressed=true]{border-color:var(--chalk);background:var(--chalk-soft);box-shadow:inset 0 0 0 1px var(--chalk)}
+.opt.blocked{background:var(--bad-soft);border-color:#E3C6C0;color:var(--bad);cursor:default}
+.opt .cnt{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--chalk);background:var(--chalk-soft);
+  border:1px solid #C9D8EC;border-radius:5px;padding:3px 6px;min-width:34px;text-align:center}
+.opt.blocked .cnt{color:var(--bad);background:#fff;border-color:#E3C6C0}
+.opt .w{font-size:16px;font-weight:700;color:var(--chalk)}
+.opt.blocked .w{color:var(--bad)}
+.opt .why{margin-left:auto;font-size:10.5px;color:var(--ink-3);text-align:right;line-height:1.3}
+.opt.blocked .why{color:var(--bad)}
+
+.marks{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px}
+.marks th{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500;text-align:right;padding:0 0 6px;border-bottom:1px solid var(--rule)}
+.marks th:first-child,.marks td:first-child{text-align:left}
+.marks td{padding:6px 0;text-align:right;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+.marks tr:last-child td{border-bottom:0}
+.marks .no{color:var(--ink-3);font-size:12px}
+.marks .prime{font-size:16px;font-weight:600;color:var(--chalk)}
+
+.runblock{border-top:1px dashed var(--rule);padding-top:12px;margin-top:14px}
+.runblock:first-child{border-top:0;padding-top:0;margin-top:0}
+.runname{font-weight:700;font-size:15px;margin:0 0 2px}
+.runmeta{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin:0 0 8px}
+.pole{background:#fff;border:1px solid var(--rule-soft);border-radius:8px;padding:6px;margin-top:10px}
+.pole svg{display:block;width:100%;height:auto}
+.hit{font-family:var(--mono);font-size:12px;padding:5px 8px;border-radius:6px;margin-top:4px;background:var(--good-soft);color:var(--good)}
+.hit.warn{background:var(--pencil-soft);color:#7A6008}
+.hit.no{background:var(--bad-soft);color:var(--bad)}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;font-family:var(--mono);font-size:13px}
+.summary div{background:#fff;border:1px solid var(--rule-soft);border-radius:8px;padding:8px 10px}
+.summary .k{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.summary .v{font-size:16px;font-weight:600}
+.presetbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.presetbar select{font-family:var(--ui);font-size:14px;padding:8px;border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink);flex:1;min-width:120px}
+footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:center;padding:8px 0 0}
+@media (prefers-reduced-motion:no-preference){ .opt,.btn,.stepper button{transition:background .12s ease} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">
+    <h1>Chalk Line</h1>
+    <span class="sub">OG box layout</span>
+  </div>
+  <div class="rulebox" id="ruleline"></div>
+</header>
+
+<section class="panel">
+  <p class="eyebrow">The pattern</p>
+  <div class="grid2">
+    <label class="f"><span class="lab">Gap between boxes</span>
+      <span class="stepper">
+        <button type="button" data-step="-0.25" data-for="gap">&minus;</button>
+        <input type="text" id="gap" value="5">
+        <button type="button" data-step="0.25" data-for="gap">+</button>
+      </span>
+    </label>
+    <label class="f"><span class="lab">OG stock width</span>
+      <span class="stepper">
+        <button type="button" data-step="-0.0625" data-for="stock">&minus;</button>
+        <input type="text" id="stock" value="1 1/8">
+        <button type="button" data-step="0.0625" data-for="stock">+</button>
+      </span>
+    </label>
+    <label class="f"><span class="lab">Box height (outside)</span>
+      <span class="stepper">
+        <button type="button" data-step="-0.5" data-for="boxH">&minus;</button>
+        <input type="text" id="boxH" value="30">
+        <button type="button" data-step="0.5" data-for="boxH">+</button>
+      </span>
+    </label>
+    <label class="f"><span class="lab">Bottom of box, off the floor</span>
+      <span class="stepper">
+        <button type="button" data-step="-0.5" data-for="boxBottom">&minus;</button>
+        <input type="text" id="boxBottom" value="8">
+        <button type="button" data-step="0.5" data-for="boxBottom">+</button>
+      </span>
+    </label>
+  </div>
+  <div class="row-actions">
+    <label class="toggle"><input type="checkbox" id="cornerHalf" checked> Half gap into a corner</label>
+  </div>
+  <p class="note" id="cornerNote"></p>
+  <div class="grid3" style="margin-top:10px">
+    <label class="f"><span class="lab">Ignore widths under</span><input type="text" id="wMin" value="16"></label>
+    <label class="f"><span class="lab">Ignore widths over</span><input type="text" id="wMax" value="60"></label>
+    <label class="f"><span class="lab">Clear of plates by</span><input type="text" id="clear" value="0"></label>
+  </div>
+  <div class="grid2" style="margin-top:10px">
+    <div class="f">
+      <span class="lab">Round widths to</span>
+      <div class="seg tiny" id="rezSeg" role="group" aria-label="Rounding">
+        <button type="button" data-rez="16" aria-pressed="true">1/16</button>
+        <button type="button" data-rez="8" aria-pressed="false">1/8</button>
+        <button type="button" data-rez="4" aria-pressed="false">1/4</button>
+      </div>
+    </div>
+    <div class="f">
+      <span class="lab">May slide off center to dodge an outlet</span>
+      <div class="seg tiny" id="slideSeg" role="group" aria-label="Slide allowance">
+        <button type="button" data-slide="0" aria-pressed="true">no</button>
+        <button type="button" data-slide="0.5" aria-pressed="false">1/2"</button>
+        <button type="button" data-slide="1" aria-pressed="false">1"</button>
+        <button type="button" data-slide="2" aria-pressed="false">2"</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:10px">
+    <label class="f"><span class="lab">Base height <span style="color:var(--ink-3)">(drawing only)</span></span><input type="text" id="baseH" value="4 1/2"></label>
+    <label class="f"><span class="lab">Cover plate height</span><input type="text" id="plateH" value="4 1/2"></label>
+  </div>
+</section>
+
+<section class="panel">
+  <p class="eyebrow">Walls</p>
+  <p class="note" style="margin-top:0">One run per clear span — a wall with a door in it is two runs. Outlets are measured to a plate edge, not a center — pick the end you'd actually pull your tape from. L means left end of the run to the left edge of the plate; R means right end to the right edge. Same idea vertically: floor to the bottom edge, or floor to the top. Tap a box count to lay it out.</p>
+  <div id="runs"></div>
+  <div class="row-actions">
+    <button class="btn sm" type="button" id="addRun">+ Add wall</button>
+    <button class="btn sm" type="button" id="matchRoom">Match the room</button>
+  </div>
+  <p class="note" id="matchNote"></p>
+</section>
+
+<section class="panel" id="layoutPanel" hidden>
+  <p class="eyebrow">Marks</p>
+  <div class="summary" id="summary"></div>
+  <div id="layout"></div>
+</section>
+
+<section class="panel" id="cutPanel" hidden>
+  <p class="eyebrow">Cut list</p>
+  <div id="cutlist"></div>
+</section>
+
+<section class="panel">
+  <p class="eyebrow">Saved jobs</p>
+  <div class="presetbar">
+    <select id="presetSel"><option value="">— pick a saved job —</option></select>
+    <button class="btn sm" type="button" id="loadPreset">Load</button>
+    <button class="btn sm" type="button" id="savePreset">Save as…</button>
+    <button class="btn sm" type="button" id="delPreset">Delete</button>
+  </div>
+  <p class="note" id="storeNote"></p>
+</section>
+
+<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-08-23d</span> · <span id="offline">checking offline…</span></footer>
+</div>
+
+<script>
+"use strict";
+
+/* ============================ measurement math ============================ */
+function parseMeasure(raw){
+  if(raw === null || raw === undefined) return null;
+  let t = String(raw).trim().replace(/[""'']/g,"").replace(/\s+/g," ");
+  if(!t) return null;
+  let neg = false;
+  if(t[0] === "-"){ neg = true; t = t.slice(1).trim(); }
+  t = t.replace(/^(\d+)\s*-\s*(\d+\s*\/\s*\d+)$/, "$1 $2");
+  let m, val = null;
+  if((m = t.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/))){
+    const d = +m[3]; if(!d) return null;
+    val = (+m[1]) + (+m[2]) / d;
+  } else if((m = t.match(/^(\d+)\s*\/\s*(\d+)$/))){
+    const d = +m[2]; if(!d) return null;
+    val = (+m[1]) / d;
+  } else if(/^\d*\.?\d+$/.test(t)){
+    val = parseFloat(t);
+  }
+  if(val === null || !isFinite(val)) return null;
+  return neg ? -val : val;
+}
+function fmtFrac(x, den){
+  den = den || 16;
+  if(x === null || x === undefined || !isFinite(x)) return "—";
+  const neg = x < 0, ax = Math.abs(x);
+  let whole = Math.floor(ax + 1e-9);
+  let num = Math.round((ax - whole) * den);
+  if(num >= den){ whole += 1; num = 0; }
+  let out;
+  if(num === 0){ out = String(whole); }
+  else{
+    let n = num, d = den;
+    while(n % 2 === 0 && d % 2 === 0){ n /= 2; d /= 2; }
+    out = whole ? (whole + " " + n + "/" + d) : (n + "/" + d);
+  }
+  return (neg ? "-" : "") + out;
+}
+function ft(x){
+  const f = Math.floor(x / 12), i = x - f * 12;
+  return f ? (f + "' " + fmtFrac(i) + '"') : (fmtFrac(i) + '"');
+}
+
+/* ============================ state ============================ */
+const state = {
+  rez: 16,
+  gap: 5, stock: 1.125, boxH: 30, boxBottom: 8, baseH: 4.5, plateH: 4.5,
+  wMin: 16, wMax: 60, clear: 0, slideMax: 0,
+  cornerHalf: true,
+  runs: [
+    { name:"Wall 1", L:156, left:"corner", right:"corner", obs:[], pick:null },
+    { name:"Wall 2", L:98,  left:"corner", right:"casing", obs:[ {label:"outlet", ref:"right", at:41, w:2.75, vref:"bottom", h:12.75} ], pick:null }
+  ]
+};
+const $ = function(id){ return document.getElementById(id); };
+
+/* ============================ geometry ============================ */
+function units(){
+  const U = state.rez, q = function(x){ return Math.round(x * U); };
+  return { U:U, q:q, g:q(state.gap), t:q(state.stock), clear:q(state.clear),
+           slide:q(state.slideMax), wMin:q(state.wMin), wMax:q(state.wMax) };
+}
+function targetMargin(kind, g){
+  // Stopping half a gap short of an inside corner makes the wrap read as one
+  // full gap. A door or window casing gets the whole gap.
+  if(kind === "corner" && state.cornerHalf) return Math.round(g / 2);
+  return g;
+}
+function prepRun(run, u){
+  const b1 = state.boxBottom, b2 = state.boxBottom + state.boxH;
+  const L = u.q(run.L);
+  const obs = run.obs.map(function(o){
+    // "at" runs from whichever end you picked, to the plate edge on that side.
+    const w = u.q(o.w), at = u.q(o.at);
+    const x1 = (o.ref === "right") ? (L - at - w) : at;
+    const h1 = (o.vref === "top") ? (o.h - state.plateH) : o.h;
+    const h2 = h1 + state.plateH;
+    const vHit = (h2 > b1 + 1e-9) && (h1 < b2 - 1e-9);
+    const railHit = vHit && (
+      (h1 < b1 + state.stock - 1e-9 && h2 > b1 + 1e-9) ||
+      (h1 < b2 - 1e-9 && h2 > b2 - state.stock + 1e-9)
+    );
+    return { label:o.label, x1:x1, x2:x1 + w, h1:h1, h2:h2,
+             offWall:(x1 < 0 || x1 + w > L), vHit:vHit, railHit:railHit };
+  });
+  return { src:run, name:run.name, L:L, left:run.left, right:run.right, obs:obs };
+}
+
+/* Older saved jobs stored plate centers. Convert them in place. */
+function normalizeObs(){
+  state.runs.forEach(function(run){
+    if(!run.obs) run.obs = [];
+    run.obs.forEach(function(o){
+      if(o.at === undefined){
+        o.at = (o.pos || 0) - (o.w || 2.75) / 2;
+        o.ref = "left";
+        o.h = (o.aff === undefined ? 15 : o.aff) - state.plateH / 2;
+        o.vref = "bottom";
+        delete o.pos; delete o.aff;
+      }
+      if(!o.ref) o.ref = "left";
+      if(!o.vref) o.vref = "bottom";
+    });
+    if(run.pick === undefined) run.pick = null;
+  });
+}
+function hits(r, mL, N, W, u){
+  for(let i = 0; i < r.obs.length; i++){
+    const ob = r.obs[i];
+    if(!ob.vHit) continue;
+    const a = ob.x1 - u.clear, b = ob.x2 + u.clear;
+    for(let k = 0; k < N; k++){
+      const x = mL + k * (W + u.g);
+      if(ob.railHit && a < x + W && b > x) return "rail";
+      if(a < x + u.t && b > x) return "stile";
+      if(a < x + W && b > x + W - u.t) return "stile";
+    }
+  }
+  return null;
+}
+
+/* For every box count that fits the wall the width is forced — gap and end
+   margins are fixed, so N is the only lever. The rounding remainder is the one
+   loose thread; it gets pushed into the two end margins where nobody sees it. */
+function optionsFor(r, u){
+  const tL = targetMargin(r.left, u.g), tR = targetMargin(r.right, u.g);
+  const out = [];
+  for(let N = 1; N <= 40; N++){
+    const inner = r.L - tL - tR - (N - 1) * u.g;
+    if(inner <= 0) break;
+    const W = Math.round(inner / N);
+    if(W <= 2 * u.t) break;
+    const slack = r.L - (N * W + (N - 1) * u.g);
+    const extra = slack - tL - tR;                 // pure rounding remainder
+    const half = Math.floor(extra / 2);
+    let mL = tL + half, mR = slack - mL;
+    if(mL < 0 || mR < 0) continue;
+
+    let blocked = hits(r, mL, N, W, u), slid = 0;
+    if(blocked && u.slide > 0){
+      for(let d = 1; d <= u.slide; d++){
+        if(mL - d >= 0 && !hits(r, mL - d, N, W, u)){ mL -= d; mR += d; slid = -d; blocked = null; break; }
+        if(mR - d >= 0 && !hits(r, mL + d, N, W, u)){ mL += d; mR -= d; slid = d; blocked = null; break; }
+      }
+    }
+    let clears = 0;
+    if(blocked === "stile"){
+      const reach = u.q(6);
+      for(let d = 1; d <= reach; d++){
+        if((mL - d >= 0 && !hits(r, mL - d, N, W, u)) || (mR - d >= 0 && !hits(r, mL + d, N, W, u))){ clears = d; break; }
+      }
+    }
+    out.push({ N:N, W:W, mL:mL, mR:mR, blocked:blocked, slid:slid, clears:clears,
+               inBand:(W >= u.wMin && W <= u.wMax), drift:extra });
+  }
+  return out;
+}
+
+/* ============================ wall editor + answers ============================ */
+function bindObNum(inp, o, key){
+  inp.value = fmtFrac(o[key]);
+  inp.oninput = function(){
+    const v = parseMeasure(inp.value);
+    inp.classList.toggle("bad", v === null && inp.value.trim() !== "");
+    if(v !== null){ o[key] = v; refresh(); }
+  };
+  inp.onblur = function(){ const v = parseMeasure(inp.value); if(v !== null) inp.value = fmtFrac(v); };
+}
+function renderRuns(){
+  const host = $("runs");
+  host.innerHTML = "";
+  const u = units();
+
+  state.runs.forEach(function(run, i){
+    const card = document.createElement("div");
+    card.className = "runcard";
+
+    const top = document.createElement("div");
+    top.className = "runtop";
+    top.innerHTML =
+      '<label class="f"><span class="lab">Wall</span><input type="text" class="rn"></label>' +
+      '<label class="f"><span class="lab">Clear length</span><input type="text" class="rl"></label>' +
+      '<button type="button" class="kill" aria-label="remove wall">&times;</button>';
+    const nm = top.querySelector(".rn"), ln = top.querySelector(".rl");
+    nm.value = run.name;
+    nm.oninput = function(){ run.name = nm.value; };
+    ln.value = fmtFrac(run.L);
+    ln.oninput = function(){
+      const v = parseMeasure(ln.value);
+      ln.classList.toggle("bad", v === null && ln.value.trim() !== "");
+      if(v !== null && v > 0){ run.L = v; run.pick = null; refresh(); }
+    };
+    ln.onblur = function(){ const v = parseMeasure(ln.value); if(v !== null) ln.value = fmtFrac(v); };
+    top.querySelector(".kill").onclick = function(){ state.runs.splice(i, 1); refresh(); };
+    card.appendChild(top);
+
+    const ends = document.createElement("div");
+    ends.className = "ends";
+    ["left", "right"].forEach(function(side){
+      const f = document.createElement("div");
+      f.className = "f";
+      f.innerHTML = '<span class="lab">' + (side === "left" ? "Left end" : "Right end") + '</span>' +
+        '<div class="seg tiny"><button type="button" data-k="corner">Corner</button><button type="button" data-k="casing">Casing</button></div>';
+      Array.prototype.forEach.call(f.querySelectorAll("button"), function(b){
+        b.setAttribute("aria-pressed", String(run[side] === b.getAttribute("data-k")));
+        b.onclick = function(){ run[side] = b.getAttribute("data-k"); run.pick = null; refresh(); };
+      });
+      ends.appendChild(f);
+    });
+    card.appendChild(ends);
+
+    const oh = document.createElement("div");
+    oh.className = "obhead";
+    oh.innerHTML = "<span>Outlet / obstruction</span><span>Plate</span><span></span>";
+    card.appendChild(oh);
+
+    run.obs.forEach(function(o, j){
+      const wrapOb = document.createElement("div");
+      wrapOb.className = "obwrap";
+
+      const rowA = document.createElement("div");
+      rowA.className = "obrow";
+      rowA.innerHTML = '<input type="text" class="ol"><input type="text" class="ow">' +
+                       '<button type="button" class="kill">&times;</button>';
+      const el = rowA.querySelector(".ol");
+      el.value = o.label; el.oninput = function(){ o.label = el.value; };
+      bindObNum(rowA.querySelector(".ow"), o, "w");
+      rowA.querySelector(".kill").onclick = function(){ run.obs.splice(j, 1); refresh(); };
+      wrapOb.appendChild(rowA);
+
+      const rowB = document.createElement("div");
+      rowB.className = "obrow2";
+      rowB.innerHTML =
+        '<div class="obfield"><span class="mini">Along the wall</span><div class="obline">' +
+          '<div class="seg tiny xs"><button type="button" data-r="left">L</button><button type="button" data-r="right">R</button></div>' +
+          '<input type="text" class="oat"></div></div>' +
+        '<div class="obfield"><span class="mini">Off the floor</span><div class="obline">' +
+          '<div class="seg tiny xs"><button type="button" data-v="bottom">Btm</button><button type="button" data-v="top">Top</button></div>' +
+          '<input type="text" class="oh"></div></div>';
+      Array.prototype.forEach.call(rowB.querySelectorAll("[data-r]"), function(b){
+        b.setAttribute("aria-pressed", String(o.ref === b.getAttribute("data-r")));
+        b.title = b.getAttribute("data-r") === "left"
+          ? "From the left end of this run to the left edge of the plate"
+          : "From the right end of this run to the right edge of the plate";
+        b.onclick = function(){ o.ref = b.getAttribute("data-r"); refresh(); };
+      });
+      Array.prototype.forEach.call(rowB.querySelectorAll("[data-v]"), function(b){
+        b.setAttribute("aria-pressed", String(o.vref === b.getAttribute("data-v")));
+        b.title = b.getAttribute("data-v") === "bottom"
+          ? "Floor to the bottom edge of the plate"
+          : "Floor to the top edge of the plate";
+        b.onclick = function(){ o.vref = b.getAttribute("data-v"); refresh(); };
+      });
+      bindObNum(rowB.querySelector(".oat"), o, "at");
+      bindObNum(rowB.querySelector(".oh"), o, "h");
+      wrapOb.appendChild(rowB);
+      card.appendChild(wrapOb);
+    });
+
+    const acts = document.createElement("div");
+    acts.className = "row-actions";
+    [["+ 1-gang", 2.75, 12.75, "outlet"], ["+ 2-gang", 4.5, 12.75, "outlet"], ["+ switch", 2.75, 43.75, "switch"]].forEach(function(sp){
+      const b = document.createElement("button");
+      b.className = "btn sm"; b.type = "button"; b.textContent = sp[0];
+      b.onclick = function(){
+        run.obs.push({ label:sp[3], ref:"left", at:Math.round(run.L / 2), w:sp[1], vref:"bottom", h:sp[2] });
+        refresh();
+      };
+      acts.appendChild(b);
+    });
+    card.appendChild(acts);
+
+    // ---- what this wall can do ----
+    const opts = optionsFor(prepRun(run, u), u);
+    const shown = opts.filter(function(o){ return o.inBand; });
+    const box = document.createElement("div");
+    box.className = "opts";
+    if(!shown.length){
+      const p = document.createElement("p");
+      p.className = "note";
+      p.textContent = opts.length
+        ? "Every box count on this wall falls outside the width limits. Widen them to see the rest."
+        : "Give this wall a length.";
+      box.appendChild(p);
+    }
+    shown.forEach(function(o){
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt" + (o.blocked ? " blocked" : "");
+      b.setAttribute("aria-pressed", String(run.pick === o.N));
+      let why;
+      if(o.blocked === "rail"){
+        why = "plate crosses a rail<br>move the box up or down";
+      } else if(o.blocked === "stile"){
+        why = o.clears ? ("stile on a plate<br>clears with a " + fmtFrac(o.clears / u.U, u.U) + '" slide')
+                       : "stile on a plate";
+      } else if(o.slid){
+        why = "slid " + fmtFrac(Math.abs(o.slid) / u.U, u.U) + '" ' + (o.slid < 0 ? "left" : "right") + "<br>to clear an outlet";
+      } else {
+        why = fmtFrac(o.mL / u.U, u.U) + '" / ' + fmtFrac(o.mR / u.U, u.U) + '" ends';
+      }
+      b.innerHTML =
+        '<span class="cnt">' + o.N + '</span>' +
+        '<span><span class="w">' + fmtFrac(o.W / u.U, u.U) + '"</span> wide</span>' +
+        '<span class="why">' + why + "</span>";
+      if(!o.blocked) b.onclick = function(){ run.pick = (run.pick === o.N ? null : o.N); refresh(); };
+      box.appendChild(b);
+    });
+    card.appendChild(box);
+    host.appendChild(card);
+  });
+
+  if(!state.runs.length) host.innerHTML = '<p class="note">No walls yet. Add one and give it a clear length.</p>';
+}
+
+/* ============================ room matching ============================ */
+function matchRoom(){
+  const u = units();
+  const sets = state.runs.map(function(run){
+    return optionsFor(prepRun(run, u), u).filter(function(o){ return o.inBand && !o.blocked; });
+  });
+  if(!sets.length || sets.some(function(s){ return !s.length; })){
+    $("matchNote").textContent = "At least one wall has no clear option inside the width limits — nothing to match against.";
+    return;
+  }
+  const targets = [];
+  sets.forEach(function(s){ s.forEach(function(o){ targets.push(o.W); }); });
+  let bestSpread = Infinity, bestPick = null;
+  targets.forEach(function(T){
+    const pick = sets.map(function(s){
+      let b = s[0];
+      for(let i = 1; i < s.length; i++) if(Math.abs(s[i].W - T) < Math.abs(b.W - T)) b = s[i];
+      return b;
+    });
+    let lo = Infinity, hi = -Infinity;
+    pick.forEach(function(p){ lo = Math.min(lo, p.W); hi = Math.max(hi, p.W); });
+    if(hi - lo < bestSpread){ bestSpread = hi - lo; bestPick = pick; }
+  });
+  bestPick.forEach(function(p, i){ state.runs[i].pick = p.N; });
+  refresh();
+  $("matchNote").textContent = "Closest the room gets is a " + fmtFrac(bestSpread / u.U, u.U) +
+    '" spread between the widest and narrowest wall.';
+}
+
+/* ============================ chosen layout ============================ */
+function renderLayout(){
+  const u = units();
+  const host = $("layout");
+  host.innerHTML = "";
+  const picked = [];
+  state.runs.forEach(function(run){
+    if(run.pick === null) return;
+    const r = prepRun(run, u);
+    const o = optionsFor(r, u).filter(function(x){ return x.N === run.pick; })[0];
+    if(o && !o.blocked) picked.push({ r:r, o:o });
+  });
+  if(!picked.length){ $("layoutPanel").hidden = true; $("cutPanel").hidden = true; return; }
+
+  let lo = Infinity, hi = -Infinity, boxes = 0;
+  picked.forEach(function(p){ lo = Math.min(lo, p.o.W); hi = Math.max(hi, p.o.W); boxes += p.o.N; });
+  $("summary").innerHTML =
+    '<div><span class="k">Walls laid out</span><span class="v">' + picked.length + "</span></div>" +
+    '<div><span class="k">Boxes</span><span class="v">' + boxes + "</span></div>" +
+    '<div><span class="k">Widths</span><span class="v">' +
+      (lo === hi ? fmtFrac(lo / u.U, u.U) + '"' : fmtFrac(lo / u.U, u.U) + '"–' + fmtFrac(hi / u.U, u.U) + '"') + "</span></div>" +
+    '<div><span class="k">Spread</span><span class="v">' + fmtFrac((hi - lo) / u.U, u.U) + '"</span></div>';
+
+  picked.forEach(function(p, i){
+    const r = p.r, o = p.o, U = u.U;
+    const block = document.createElement("div");
+    block.className = "runblock";
+    const edges = [];
+    for(let k = 0; k < o.N; k++){ const x = o.mL + k * (o.W + u.g); edges.push({ l:x, r:x + o.W }); }
+
+    block.innerHTML =
+      '<p class="runname">' + (r.name || ("Wall " + (i + 1))) + "</p>" +
+      '<p class="runmeta">' + ft(r.L / U) + " clear · " + o.N + " box" + (o.N === 1 ? "" : "es") + " at " +
+      fmtFrac(o.W / U, U) + '" · ' + fmtFrac(u.g / U, U) + '" gaps · ends ' +
+      fmtFrac(o.mL / U, U) + '" / ' + fmtFrac(o.mR / U, U) + '"</p>';
+
+    let html = '<table class="marks"><thead><tr><th>Box</th><th>Left edge</th><th>Right edge</th><th>From far end</th></tr></thead><tbody>';
+    edges.forEach(function(e, k){
+      html += "<tr><td class='no'>" + (k + 1) + "</td>" +
+        '<td><span class="prime">' + fmtFrac(e.l / U, U) + '"</span></td>' +
+        '<td><span class="prime">' + fmtFrac(e.r / U, U) + '"</span></td>' +
+        "<td>" + fmtFrac((r.L - e.r) / U, U) + '"</td></tr>';
+    });
+    html += "</tbody></table>";
+    const t = document.createElement("div"); t.innerHTML = html;
+    block.appendChild(t);
+
+    r.obs.forEach(function(ob){
+      const d = document.createElement("div");
+      d.className = "hit" + (ob.offWall ? " no" : (ob.vHit ? "" : " warn"));
+      d.textContent = (ob.label || "outlet") + " " + fmtFrac(ob.x1 / U, U) + '"–' + fmtFrac(ob.x2 / U, U) +
+        '" from the left end — ' + placement(ob, edges, u, r);
+      block.appendChild(d);
+    });
+    block.appendChild(drawRun(r, o, u));
+    host.appendChild(block);
+  });
+
+  $("layoutPanel").hidden = false;
+  renderCutList(picked, u);
+}
+function placement(ob, edges, u, r){
+  const U = u.U;
+  if(ob.offWall) return "that measurement puts the plate off the end of the wall — check the end you pulled from";
+  if(!ob.vHit) return "clear of the boxes vertically, nothing to dodge";
+  for(let k = 0; k < edges.length; k++){
+    const e = edges[k];
+    if(ob.x1 >= e.l + u.t && ob.x2 <= e.r - u.t){
+      return "in the field of box " + (k + 1) + " — " + fmtFrac((ob.x1 - e.l - u.t) / U, U) +
+        '" / ' + fmtFrac((e.r - u.t - ob.x2) / U, U) + '" to the stiles';
+    }
+  }
+  if(ob.x2 <= edges[0].l) return "in the left margin, " + fmtFrac((edges[0].l - ob.x2) / U, U) + '" clear of box 1';
+  const last = edges[edges.length - 1];
+  if(ob.x1 >= last.r) return "in the right margin, " + fmtFrac((ob.x1 - last.r) / U, U) + '" clear of the last box';
+  for(let k = 0; k < edges.length - 1; k++){
+    if(ob.x1 >= edges[k].r && ob.x2 <= edges[k + 1].l){
+      return "in the gap between " + (k + 1) + " and " + (k + 2) + " — " +
+        fmtFrac((ob.x1 - edges[k].r) / U, U) + '" / ' + fmtFrac((edges[k + 1].l - ob.x2) / U, U) + '" to the trim';
+    }
+  }
+  return "ON THE TRIM — check this one";
+}
+
+/* ============================ elevation ============================ */
+function drawRun(r, o, u){
+  const U = u.U;
+  const host = document.createElement("div");
+  host.className = "pole";
+  const Lin = r.L / U, Win = o.W / U, gIn = u.g / U;
+  const SVGW = 344, padX = 10, padTop = 8, padBot = 22;
+  const sx = Math.min(4.5, (SVGW - padX * 2) / Lin);
+  const drawW = Lin * sx, x0 = (SVGW - drawW) / 2;
+  const topIn = Math.max(state.boxBottom + state.boxH + 4, state.baseH + 4);
+  const SVGH = topIn * sx + padTop + padBot, floorY = SVGH - padBot;
+  const X = function(v){ return x0 + v * sx; }, Y = function(v){ return floorY - v * sx; };
+  const pid = "hatch" + Math.abs(Math.round(r.L * 7 + o.N * 13));
+
+  let s = '<svg viewBox="0 0 ' + SVGW + " " + SVGH.toFixed(1) + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wall elevation">';
+  s += '<defs><pattern id="' + pid + '" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="#C8CEC4" stroke-width="2"/></pattern></defs>';
+  s += '<line x1="' + X(0) + '" y1="' + floorY + '" x2="' + X(Lin) + '" y2="' + floorY + '" stroke="#16202A" stroke-width="2"/>';
+  s += '<rect x="' + X(0) + '" y="' + Y(state.baseH) + '" width="' + drawW + '" height="' + (state.baseH * sx) + '" fill="url(#' + pid + ')"/>';
+  [[0, r.left], [Lin, r.right]].forEach(function(pr){
+    const dash = pr[1] === "corner" ? "" : ' stroke-dasharray="4 3"';
+    s += '<line x1="' + X(pr[0]) + '" y1="' + padTop + '" x2="' + X(pr[0]) + '" y2="' + floorY + '" stroke="#16202A" stroke-width="2"' + dash + "/>";
+  });
+  const yTop = Y(state.boxBottom + state.boxH), hBox = state.boxH * sx, tPx = state.stock * sx;
+  for(let k = 0; k < o.N; k++){
+    const xl = (o.mL + k * (o.W + u.g)) / U;
+    s += '<rect x="' + X(xl) + '" y="' + yTop + '" width="' + (Win * sx) + '" height="' + hBox + '" fill="#1F5FA8" opacity="0.9"/>';
+    if(Win - 2 * state.stock > 0 && state.boxH - 2 * state.stock > 0){
+      s += '<rect x="' + (X(xl) + tPx) + '" y="' + (yTop + tPx) + '" width="' + ((Win - 2 * state.stock) * sx) +
+           '" height="' + ((state.boxH - 2 * state.stock) * sx) + '" fill="#F7F8F3"/>';
+    }
+  }
+  r.obs.forEach(function(ob){
+    s += '<rect x="' + X(ob.x1 / U) + '" y="' + Y(ob.h2) + '" width="' + ((ob.x2 - ob.x1) / U * sx) +
+         '" height="' + ((ob.h2 - ob.h1) * sx) + '" fill="' + (ob.vHit ? "#B08D14" : "#8A949E") + '" opacity="0.95" rx="1"/>';
+  });
+  const dimY = floorY + 13;
+  const marks = [0, o.mL / U];
+  for(let k = 0; k < o.N; k++){
+    const xl = (o.mL + k * (o.W + u.g)) / U;
+    marks.push(xl + Win);
+    if(k < o.N - 1) marks.push(xl + Win + gIn);
+  }
+  marks.push(Lin);
+  s += '<line x1="' + X(0) + '" y1="' + dimY + '" x2="' + X(Lin) + '" y2="' + dimY + '" stroke="#B08D14" stroke-width="1"/>';
+  marks.forEach(function(m){
+    s += '<line x1="' + X(m) + '" y1="' + (dimY - 3) + '" x2="' + X(m) + '" y2="' + (dimY + 3) + '" stroke="#B08D14" stroke-width="1"/>';
+  });
+  s += '<text x="' + X(o.mL / U / 2) + '" y="' + (dimY + 11) + '" font-family="ui-monospace,monospace" font-size="7.5" fill="#8A949E" text-anchor="middle">' + fmtFrac(o.mL / U, U) + "</text>";
+  s += '<text x="' + X(o.mL / U + Win / 2) + '" y="' + (dimY + 11) + '" font-family="ui-monospace,monospace" font-size="8" font-weight="600" fill="#B08D14" text-anchor="middle">' + fmtFrac(Win, U) + "</text>";
+  if(o.N > 1){
+    s += '<text x="' + X(o.mL / U + Win + gIn / 2) + '" y="' + (dimY + 11) + '" font-family="ui-monospace,monospace" font-size="7.5" fill="#8A949E" text-anchor="middle">' + fmtFrac(gIn, U) + "</text>";
+  }
+  s += "</svg>";
+  host.innerHTML = s;
+  return host;
+}
+
+/* ============================ cut list ============================ */
+function renderCutList(picked, u){
+  const U = u.U, H = state.boxH, t = state.stock;
+  const byW = {};
+  picked.forEach(function(p){ byW[p.o.W] = (byW[p.o.W] || 0) + p.o.N; });
+  const widths = Object.keys(byW).map(Number).sort(function(a, b){ return a - b; });
+  let lineal = 0, pieces = 0;
+  let html = '<table class="marks"><thead><tr><th>Piece</th><th>Long point</th><th>Short point</th><th>Qty</th></tr></thead><tbody>';
+  widths.forEach(function(W){
+    const n = byW[W], Win = W / U;
+    lineal += n * 2 * (Win + H) / 12; pieces += n * 4;
+    html += "<tr><td>Rails · " + fmtFrac(Win, U) + '" box</td><td><span class="prime">' + fmtFrac(Win, U) +
+      '"</span></td><td>' + fmtFrac(Win - 2 * t, U) + '"</td><td>' + (n * 2) + "</td></tr>";
+    html += "<tr><td>Stiles · " + fmtFrac(Win, U) + '" box</td><td><span class="prime">' + fmtFrac(H, U) +
+      '"</span></td><td>' + fmtFrac(H - 2 * t, U) + '"</td><td>' + (n * 2) + "</td></tr>";
+  });
+  html += "</tbody></table>";
+  html += '<div class="summary">' +
+    '<div><span class="k">Pieces</span><span class="v">' + pieces + "</span></div>" +
+    '<div><span class="k">Lineal, net</span><span class="v">' + lineal.toFixed(1) + " ft</span></div>" +
+    '<div><span class="k">Order at +15%</span><span class="v">' + Math.ceil(lineal * 1.15) + " ft</span></div>" +
+    '<div><span class="k">Box sizes</span><span class="v">' + widths.length + "</span></div></div>";
+  html += '<p class="note">All miters 45&deg;. Long point is the outside dimension, short point the inside.</p>';
+  $("cutlist").innerHTML = html;
+  $("cutPanel").hidden = false;
+}
+
+/* ============================ inputs ============================ */
+function refresh(){ syncNotes(); renderRuns(); renderLayout(); }
+
+function bindMeasure(id, key, resets){
+  const el = $(id);
+  el.oninput = function(){
+    const v = parseMeasure(el.value);
+    el.classList.toggle("bad", v === null && el.value.trim() !== "");
+    if(v !== null){
+      state[key] = v;
+      if(resets) state.runs.forEach(function(r){ r.pick = null; });
+      refresh();
+    }
+  };
+  el.onblur = function(){ const v = parseMeasure(el.value); if(v !== null){ el.value = fmtFrac(v); el.classList.remove("bad"); } };
+}
+bindMeasure("gap", "gap", true);
+["stock","boxH","boxBottom","baseH","plateH","wMin","wMax","clear"].forEach(function(k){ bindMeasure(k, k, false); });
+
+Array.prototype.forEach.call(document.querySelectorAll(".stepper button"), function(b){
+  b.onclick = function(){
+    const id = b.getAttribute("data-for"), step = parseFloat(b.getAttribute("data-step"));
+    const el = $(id), cur = parseMeasure(el.value);
+    const nv = Math.max(0, (cur === null ? 0 : cur) + step);
+    el.value = fmtFrac(nv); el.classList.remove("bad");
+    state[id] = nv;
+    if(id === "gap") state.runs.forEach(function(r){ r.pick = null; });
+    refresh();
+  };
+});
+function bindSeg(id, key, attr, parse){
+  const host = $(id);
+  Array.prototype.forEach.call(host.querySelectorAll("button"), function(b){
+    b.onclick = function(){
+      Array.prototype.forEach.call(host.querySelectorAll("button"), function(o){ o.setAttribute("aria-pressed", String(o === b)); });
+      state[key] = parse(b.getAttribute(attr));
+      refresh();
+    };
+  });
+}
+bindSeg("rezSeg", "rez", "data-rez", function(v){ return parseInt(v, 10); });
+bindSeg("slideSeg", "slideMax", "data-slide", parseFloat);
+
+$("cornerHalf").onchange = function(){
+  state.cornerHalf = $("cornerHalf").checked;
+  state.runs.forEach(function(r){ r.pick = null; });
+  refresh();
+};
+$("addRun").onclick = function(){
+  state.runs.push({ name:"Wall " + (state.runs.length + 1), L:120, left:"corner", right:"corner", obs:[], pick:null });
+  refresh();
+};
+$("matchRoom").onclick = matchRoom;
+
+function syncNotes(){
+  const g = state.gap;
+  $("ruleline").textContent = "gap stays put · box count is the lever · width is the answer";
+  $("cornerNote").textContent = state.cornerHalf
+    ? "Boxes stop " + fmtFrac(g / 2) + '" off an inside corner, so the wrap reads as one ' + fmtFrac(g) +
+      '" gap. Door and window casings get the full ' + fmtFrac(g) + '".'
+    : "Every end gets the full " + fmtFrac(g) + '", so a corner reads as ' + fmtFrac(g * 2) + '" once it wraps.';
+}
+
+/* ============================ saved jobs ============================ */
+const KEY = "chalkline.jobs";
+function readStore(){ try{ return JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){ return {}; } }
+function writeStore(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); return true; }catch(e){ return false; } }
+function renderPresets(){
+  const jobs = readStore(), sel = $("presetSel"), keys = Object.keys(jobs).sort();
+  sel.innerHTML = '<option value="">— pick a saved job —</option>';
+  keys.forEach(function(k){ const o = document.createElement("option"); o.value = k; o.textContent = k; sel.appendChild(o); });
+  $("storeNote").textContent = keys.length ? (keys.length + " saved on this device") : "Nothing saved yet on this device.";
+}
+$("savePreset").onclick = function(){
+  const name = prompt("Save this job as:");
+  if(!name) return;
+  const jobs = readStore();
+  jobs[name] = JSON.parse(JSON.stringify({
+    rez:state.rez, gap:state.gap, stock:state.stock, boxH:state.boxH, boxBottom:state.boxBottom,
+    baseH:state.baseH, plateH:state.plateH, wMin:state.wMin, wMax:state.wMax, clear:state.clear,
+    slideMax:state.slideMax, cornerHalf:state.cornerHalf, runs:state.runs
+  }));
+  $("storeNote").textContent = writeStore(jobs) ? ("Saved " + name + ".") : "Storage is blocked in this browser — nothing was saved.";
+  renderPresets();
+};
+$("loadPreset").onclick = function(){
+  const k = $("presetSel").value; if(!k) return;
+  const jobs = readStore(); if(!jobs[k]) return;
+  Object.keys(jobs[k]).forEach(function(p){ state[p] = jobs[k][p]; });
+  normalizeObs();
+  pushToInputs(); refresh();
+  $("storeNote").textContent = "Loaded " + k + ".";
+};
+$("delPreset").onclick = function(){
+  const k = $("presetSel").value; if(!k) return;
+  const jobs = readStore(); delete jobs[k]; writeStore(jobs); renderPresets();
+  $("storeNote").textContent = "Deleted " + k + ".";
+};
+function pushToInputs(){
+  ["gap","stock","boxH","boxBottom","baseH","plateH","wMin","wMax","clear"].forEach(function(k){ $(k).value = fmtFrac(state[k]); });
+  $("cornerHalf").checked = state.cornerHalf;
+  Array.prototype.forEach.call($("rezSeg").querySelectorAll("button"), function(b){
+    b.setAttribute("aria-pressed", String(parseInt(b.getAttribute("data-rez"), 10) === state.rez));
+  });
+  Array.prototype.forEach.call($("slideSeg").querySelectorAll("button"), function(b){
+    b.setAttribute("aria-pressed", String(parseFloat(b.getAttribute("data-slide")) === state.slideMax));
+  });
+}
+
+/* ============================ boot ============================ */
+normalizeObs();
+pushToInputs();
+refresh();
+renderPresets();
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js")
+    .then(function(reg){
+      $("offline").textContent = "works offline";
+      reg.update();                       // check for a newer worker on every launch
+      if(reg.waiting) reg.waiting.postMessage("skip");
+    })
+    .catch(function(){ $("offline").textContent = "online only"; });
+} else { $("offline").textContent = "online only"; }
+</script>
+</body>
+</html>

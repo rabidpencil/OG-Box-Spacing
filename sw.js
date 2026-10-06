@@ -5,7 +5,7 @@
    back to the cached copy. That means you no longer have to bump anything to
    push a change out — but bumping CACHE on a release is still good hygiene,
    because it clears out stale icons and manifest.                            */
-const CACHE = "chalkline-v6";
+const CACHE = "chalkline-v7";
 
 const CORE     = ["./", "./index.html", "./manifest.webmanifest"];
 const OPTIONAL = ["./icon-192.png", "./icon-512.png"];

@@ -130,6 +130,12 @@ input.bad{border-color:var(--bad);background:var(--bad-soft)}
 .summary .k{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .summary .v{font-size:16px;font-weight:600}
 .presetbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+[hidden]{display:none !important}
+select.sel{font-family:var(--ui);font-size:15px;padding:9px 10px;width:100%;border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink)}
+.opt.stk{flex-wrap:wrap;row-gap:3px}
+.opt.stk .w{font-size:14px;white-space:nowrap}
+.opt.stk .cnt{min-width:44px}
+.opt.stk .why{flex-basis:100%;margin-left:53px;text-align:left}
 .presetbar select{font-family:var(--ui);font-size:14px;padding:8px;border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink);flex:1;min-width:120px}
 footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:center;padding:8px 0 0}
 @media (prefers-reduced-motion:no-preference){ .opt,.btn,.stepper button{transition:background .12s ease} }
@@ -148,8 +154,16 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
 
 <section class="panel">
   <p class="eyebrow">The pattern</p>
-  <div class="grid2">
-    <label class="f"><span class="lab">Gap between boxes</span>
+  <label class="f"><span class="lab">Boxes per column</span>
+    <select id="stackSel" class="sel">
+      <option value="1">1 box</option>
+      <option value="2e">2 boxes, even</option>
+      <option value="21">2 boxes, 2:1 (tall over short)</option>
+      <option value="121">3 boxes, 1:2:1</option>
+    </select>
+  </label>
+  <div class="grid2" style="margin-top:10px">
+    <label class="f"><span class="lab">Gap between boxes, side to side</span>
       <span class="stepper">
         <button type="button" data-step="-0.25" data-for="gap">&minus;</button>
         <input type="text" id="gap" value="5">
@@ -163,6 +177,8 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
         <button type="button" data-step="0.0625" data-for="stock">+</button>
       </span>
     </label>
+  </div>
+  <div class="grid2" id="singleFields" style="margin-top:10px">
     <label class="f"><span class="lab">Box height (outside)</span>
       <span class="stepper">
         <button type="button" data-step="-0.5" data-for="boxH">&minus;</button>
@@ -177,6 +193,40 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
         <button type="button" data-step="0.5" data-for="boxBottom">+</button>
       </span>
     </label>
+  </div>
+  <div id="stackFields" hidden>
+    <div class="grid2" style="margin-top:10px">
+      <label class="f"><span class="lab">Top of base to ceiling</span>
+        <span class="stepper">
+          <button type="button" data-step="-0.125" data-for="wallH">&minus;</button>
+          <input type="text" id="wallH" value="90 1/2">
+          <button type="button" data-step="0.125" data-for="wallH">+</button>
+        </span>
+      </label>
+      <label class="f"><span class="lab">Gap between stacked boxes</span>
+        <span class="stepper">
+          <button type="button" data-step="-0.25" data-for="vgap">&minus;</button>
+          <input type="text" id="vgap" value="5">
+          <button type="button" data-step="0.25" data-for="vgap">+</button>
+        </span>
+      </label>
+      <label class="f"><span class="lab">Base to bottom box</span>
+        <span class="stepper">
+          <button type="button" data-step="-0.25" data-for="mBot">&minus;</button>
+          <input type="text" id="mBot" value="5">
+          <button type="button" data-step="0.25" data-for="mBot">+</button>
+        </span>
+      </label>
+      <label class="f"><span class="lab">Top box to ceiling</span>
+        <span class="stepper">
+          <button type="button" data-step="-0.25" data-for="mTop">&minus;</button>
+          <input type="text" id="mTop" value="5">
+          <button type="button" data-step="0.25" data-for="mTop">+</button>
+        </span>
+      </label>
+    </div>
+    <div class="opts" id="stackOpts"></div>
+    <p class="note" id="stackNote"></p>
   </div>
   <div class="row-actions">
     <label class="toggle"><input type="checkbox" id="cornerHalf" checked> Half gap into a corner</label>
@@ -207,7 +257,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
     </div>
   </div>
   <div class="grid2" style="margin-top:10px">
-    <label class="f"><span class="lab">Base height <span style="color:var(--ink-3)">(drawing only)</span></span><input type="text" id="baseH" value="4 1/2"></label>
+    <label class="f"><span class="lab">Base height <span style="color:var(--ink-3)" id="baseHint">(drawing only)</span></span><input type="text" id="baseH" value="5 1/2"></label>
     <label class="f"><span class="lab">Cover plate height</span><input type="text" id="plateH" value="4 1/2"></label>
   </div>
 </section>
@@ -249,7 +299,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
   </div>
 </section>
 
-<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-10-06</span> · <span id="offline">checking offline…</span></footer>
+<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-10-06b</span> · <span id="offline">checking offline…</span></footer>
 </div>
 
 <script>
@@ -300,7 +350,8 @@ function ft(x){
 /* ============================ state ============================ */
 const state = {
   rez: 16,
-  gap: 5, stock: 1.125, boxH: 30, boxBottom: 8, baseH: 4.5, plateH: 4.5,
+  gap: 5, stock: 1.125, boxH: 30, boxBottom: 8, baseH: 5.5, plateH: 4.5,
+  stack: "1", wallH: 90.5, vgap: 5, mBot: 5, mTop: 5, stackPick: null,
   wMin: 16, wMax: 60, clear: 0, slideMax: 0,
   cornerHalf: true,
   runs: [
@@ -322,24 +373,130 @@ function targetMargin(kind, g){
   if(kind === "corner" && state.cornerHalf) return Math.round(g / 2);
   return g;
 }
+/* ============================ the stack ============================
+   Heights are set once for the room. In 1-box mode it's the old behavior:
+   you give the box height and how far its bottom sits off the floor. Stacked,
+   you give the field from the top of the base to the ceiling, the two end
+   margins and the gap between boxes stay fixed, and the box heights are the
+   answer — same idea as widths. For the ratio stacks one box is snapped to a
+   multiple of 6" and the other(s) take the remainder, so the ratio comes out
+   close rather than exact; the exact split is always offered too.            */
+const STACKS = {
+  "2e":  { n:2, names:["top", "bottom"] },
+  "21":  { n:2, names:["top", "bottom"] },
+  "121": { n:3, names:["top", "middle", "bottom"] }
+};
+const STACK_KEYS = ["wallH", "vgap", "mBot", "mTop"];
+const SNAP_TOLERANCE = 0.25;   // a 6" snap that bends the ratio more than 25% loses to the exact split
+
+function solveStack(){
+  if(state.stack === "1" || !STACKS[state.stack]){
+    return { n:1, ok:true, cands:[],
+             boxes:[{ name:"", h:state.boxH, lo:state.boxBottom, hi:state.boxBottom + state.boxH }] };
+  }
+  const mode = state.stack, def = STACKS[mode], n = def.n;
+  const U = state.rez, q = function(x){ return Math.round(x * U); }, six = q(6);
+  const F = q(state.wallH), mB = q(state.mBot), mT = q(state.mTop), vg = q(state.vgap), t = q(state.stock);
+  const S = F - mB - mT - (n - 1) * vg;
+  const out = { n:n, ok:false, U:U, S:S, mB:mB, mT:mT, vg:vg, F:F, cands:[], boxes:[] };
+  if(S <= 0){
+    out.err = "The margins and gaps use up the whole height — nothing is left for boxes.";
+    return out;
+  }
+
+  const seen = {};
+  function add(hs, exact){                     // hs is top → bottom, in units
+    for(let i = 0; i < hs.length; i++) if(!(hs[i] > 2 * t)) return;
+    if(mode === "21" && !(hs[0] > hs[1])) return;
+    if(mode === "121" && !(hs[1] > hs[0])) return;
+    let sum = 0; hs.forEach(function(h){ sum += h; });
+    const left = S - sum;
+    if(left < 0) return;
+    const key = hs.join(",");
+    if(seen[key]){ if(exact) seen[key].exact = true; return; }
+    let ratio = 1;
+    if(mode === "21") ratio = hs[0] / hs[1];
+    if(mode === "121") ratio = hs[1] / hs[0];
+    const sixes = [];
+    hs.forEach(function(h, i){ if(h % six === 0) sixes.push(i); });
+    const c = { key:key, hs:hs, left:left, ratio:ratio, err:(mode === "2e" ? 0 : Math.abs(ratio - 2) / 2),
+                sixes:sixes, exact:!!exact };
+    seen[key] = c;
+    out.cands.push(c);
+  }
+  function near6(x){ const k = Math.floor(x / six); return [k * six, (k + 1) * six].filter(function(v){ return v > 0; }); }
+
+  if(mode === "2e"){
+    const h = Math.floor(S / 2);
+    add([h, h], true);
+  } else if(mode === "21"){
+    const sh = Math.round(S / 3);
+    add([S - sh, sh], true);
+    near6(S / 3).forEach(function(v){ add([S - v, v]); });          // short box on a 6" mark
+    near6(2 * S / 3).forEach(function(v){ add([v, S - v]); });      // tall box on a 6" mark
+  } else {
+    const o = Math.round(S / 4);
+    add([o, S - 2 * o, o], true);
+    near6(S / 2).forEach(function(m){ const o2 = Math.floor((S - m) / 2); add([o2, m, o2]); }); // middle on 6"
+    near6(S / 4).forEach(function(o2){ add([o2, S - 2 * o2, o2]); });                           // top & bottom on 6"
+  }
+  if(!out.cands.length){
+    out.err = "No usable split — at least one box would be too short to build.";
+    return out;
+  }
+
+  // Show the best few 6" snaps first, then the exact split.
+  const snaps = out.cands.filter(function(c){ return c.sixes.length; })
+                         .sort(function(a, b){ return a.err - b.err; }).slice(0, 3);
+  const exact = out.cands.filter(function(c){ return c.exact; })[0];
+  const list = snaps.slice();
+  if(exact && list.indexOf(exact) < 0) list.push(exact);
+  if(!list.length) list.push(out.cands[0]);
+  out.cands = list;
+
+  let pick = list.filter(function(c){ return c.key === state.stackPick; })[0];
+  out.auto = !pick;
+  if(!pick){
+    pick = (snaps.length && (snaps[0].err <= SNAP_TOLERANCE || !exact)) ? snaps[0] : (exact || list[0]);
+  }
+  out.pick = pick;
+
+  // Build the boxes from the base up. The rounding leftover (0 or 1/16")
+  // goes into the top margin, against the ceiling.
+  let cur = mB;
+  const boxes = [];
+  for(let i = n - 1; i >= 0; i--){
+    const h = pick.hs[i];
+    boxes.unshift({ name:def.names[i], h:h / U, bot:cur / U, top:(cur + h) / U,
+                    lo:state.baseH + cur / U, hi:state.baseH + (cur + h) / U });
+    cur += h + vg;
+  }
+  out.boxes = boxes;
+  out.topMargin = (mT + pick.left) / U;
+  out.ok = true;
+  return out;
+}
+
 function prepRun(run, u){
-  const b1 = state.boxBottom, b2 = state.boxBottom + state.boxH;
+  const st = solveStack(), B = st.ok ? st.boxes : [], t = state.stock, e = 1e-9;
   const L = u.q(run.L);
   const obs = run.obs.map(function(o){
     // "at" runs from whichever end you picked, to the plate edge on that side.
     const w = u.q(o.w), at = u.q(o.at);
     const x1 = (o.ref === "right") ? (L - at - w) : at;
-    const h1 = (o.vref === "top") ? (o.h - state.plateH) : o.h;
+    const h1 = (o.vref === "top") ? (o.h - state.plateH) : o.h;   // outlets stay floor-referenced
     const h2 = h1 + state.plateH;
-    const vHit = (h2 > b1 + 1e-9) && (h1 < b2 - 1e-9);
-    const railHit = vHit && (
-      (h1 < b1 + state.stock - 1e-9 && h2 > b1 + 1e-9) ||
-      (h1 < b2 - 1e-9 && h2 > b2 - state.stock + 1e-9)
-    );
+    let vHit = false, railHit = false, inBox = -1;
+    B.forEach(function(b, i){
+      if(!(h2 > b.lo + e && h1 < b.hi - e)) return;
+      vHit = true;
+      if((h1 < b.lo + t - e && h2 > b.lo + e) || (h1 < b.hi - e && h2 > b.hi - t + e)) railHit = true;
+      else inBox = i;
+    });
     return { label:o.label, x1:x1, x2:x1 + w, h1:h1, h2:h2,
-             offWall:(x1 < 0 || x1 + w > L), vHit:vHit, railHit:railHit };
+             offWall:(x1 < 0 || x1 + w > L), vHit:vHit, railHit:railHit, inBox:inBox };
   });
-  return { src:run, name:run.name, L:L, left:run.left, right:run.right, obs:obs };
+  return { src:run, name:run.name, L:L, left:run.left, right:run.right, obs:obs, st:st };
 }
 
 /* Older saved jobs stored plate centers. Convert them in place. */
@@ -560,7 +717,8 @@ function renderRuns(){
         b.setAttribute("aria-pressed", String(run.pick === o.N));
         let why;
         if(o.blocked === "rail"){
-          why = "plate crosses a rail<br>move the box up or down";
+          why = state.stack === "1" ? "plate crosses a rail<br>move the box up or down"
+                                    : "plate crosses a rail<br>adjust the stack";
         } else if(o.blocked === "stile"){
           why = o.clears ? ("stile on a plate<br>clears with a " + fmtFrac(o.clears / uu.U, uu.U) + '" slide')
                          : "stile on a plate";
@@ -631,14 +789,18 @@ function renderLayout(){
   });
   if(!picked.length){ $("layoutPanel").hidden = true; $("cutPanel").hidden = true; return; }
 
-  let lo = Infinity, hi = -Infinity, boxes = 0;
-  picked.forEach(function(p){ lo = Math.min(lo, p.o.W); hi = Math.max(hi, p.o.W); boxes += p.o.N; });
+  const st = solveStack();
+  let lo = Infinity, hi = -Infinity, cols = 0;
+  picked.forEach(function(p){ lo = Math.min(lo, p.o.W); hi = Math.max(hi, p.o.W); cols += p.o.N; });
   $("summary").innerHTML =
     '<div><span class="k">Walls laid out</span><span class="v">' + picked.length + "</span></div>" +
-    '<div><span class="k">Boxes</span><span class="v">' + boxes + "</span></div>" +
+    '<div><span class="k">Boxes' + (st.n > 1 ? " (" + cols + " cols × " + st.n + ")" : "") +
+      '</span><span class="v">' + (cols * st.n) + "</span></div>" +
     '<div><span class="k">Widths</span><span class="v">' +
       (lo === hi ? fmtFrac(lo / u.U, u.U) + '"' : fmtFrac(lo / u.U, u.U) + '"–' + fmtFrac(hi / u.U, u.U) + '"') + "</span></div>" +
     '<div><span class="k">Spread</span><span class="v">' + fmtFrac((hi - lo) / u.U, u.U) + '"</span></div>';
+
+  if(st.n > 1) host.appendChild(stackBlock(st));
 
   picked.forEach(function(p, i){
     const r = p.r, o = p.o, U = u.U;
@@ -649,11 +811,12 @@ function renderLayout(){
 
     block.innerHTML =
       '<p class="runname">' + (r.name || ("Wall " + (i + 1))) + "</p>" +
-      '<p class="runmeta">' + ft(r.L / U) + " clear · " + o.N + " box" + (o.N === 1 ? "" : "es") + " at " +
+      '<p class="runmeta">' + ft(r.L / U) + " clear · " + o.N + (st.n > 1 ? " column" + (o.N === 1 ? "" : "s") + " of " + st.n
+                                                                     : " box" + (o.N === 1 ? "" : "es")) + " at " +
       fmtFrac(o.W / U, U) + '" · ' + fmtFrac(u.g / U, U) + '" gaps · ends ' +
       fmtFrac(o.mL / U, U) + '" / ' + fmtFrac(o.mR / U, U) + '"</p>';
 
-    let html = '<table class="marks"><thead><tr><th>Box</th><th>Left edge</th><th>Right edge</th><th>From far end</th></tr></thead><tbody>';
+    let html = '<table class="marks"><thead><tr><th>' + (st.n > 1 ? "Col" : "Box") + '</th><th>Left edge</th><th>Right edge</th><th>From far end</th></tr></thead><tbody>';
     edges.forEach(function(e, k){
       html += "<tr><td class='no'>" + (k + 1) + "</td>" +
         '<td><span class="prime">' + fmtFrac(e.l / U, U) + '"</span></td>' +
@@ -678,20 +841,36 @@ function renderLayout(){
   $("layoutPanel").hidden = false;
   renderCutList(picked, u);
 }
+function vClear(ob, st){
+  const B = st.boxes;
+  if(st.n === 1 || !B.length) return "clear of the boxes vertically";
+  if(ob.h1 >= B[0].hi) return "above the stack, " + fmtFrac(ob.h1 - B[0].hi) + '" over the top box';
+  const bot = B[B.length - 1];
+  if(ob.h2 <= bot.lo) return "below the stack, " + fmtFrac(bot.lo - ob.h2) + '" under the bottom box';
+  for(let i = 0; i < B.length - 1; i++){
+    if(ob.h1 >= B[i + 1].hi && ob.h2 <= B[i].lo){
+      return "in the gap between the " + B[i].name + " and " + B[i + 1].name + " boxes — " +
+        fmtFrac(ob.h1 - B[i + 1].hi) + '" / ' + fmtFrac(B[i].lo - ob.h2) + '" to the rails';
+    }
+  }
+  return "clear of the boxes vertically";
+}
 function placement(ob, edges, u, r){
-  const U = u.U;
+  const U = u.U, st = r.st, word = st.n > 1 ? "column" : "box";
   if(ob.offWall) return "that measurement puts the plate off the end of the wall — check the end you pulled from";
-  if(!ob.vHit) return "clear of the boxes vertically, nothing to dodge";
+  if(!ob.vHit) return vClear(ob, st) + ", nothing to dodge";
   for(let k = 0; k < edges.length; k++){
     const e = edges[k];
     if(ob.x1 >= e.l + u.t && ob.x2 <= e.r - u.t){
-      return "in the field of box " + (k + 1) + " — " + fmtFrac((ob.x1 - e.l - u.t) / U, U) +
-        '" / ' + fmtFrac((e.r - u.t - ob.x2) / U, U) + '" to the stiles';
+      const b = ob.inBox >= 0 ? st.boxes[ob.inBox] : null;
+      return "in the field of " + word + " " + (k + 1) + (b && st.n > 1 ? ", " + b.name + " box" : "") + " — " +
+        fmtFrac((ob.x1 - e.l - u.t) / U, U) + '" / ' + fmtFrac((e.r - u.t - ob.x2) / U, U) + '" to the stiles' +
+        (b ? ", " + fmtFrac(ob.h1 - b.lo - state.stock) + '" / ' + fmtFrac(b.hi - state.stock - ob.h2) + '" to the rails' : "");
     }
   }
-  if(ob.x2 <= edges[0].l) return "in the left margin, " + fmtFrac((edges[0].l - ob.x2) / U, U) + '" clear of box 1';
+  if(ob.x2 <= edges[0].l) return "in the left margin, " + fmtFrac((edges[0].l - ob.x2) / U, U) + '" clear of ' + word + " 1";
   const last = edges[edges.length - 1];
-  if(ob.x1 >= last.r) return "in the right margin, " + fmtFrac((ob.x1 - last.r) / U, U) + '" clear of the last box';
+  if(ob.x1 >= last.r) return "in the right margin, " + fmtFrac((ob.x1 - last.r) / U, U) + '" clear of the last ' + word;
   for(let k = 0; k < edges.length - 1; k++){
     if(ob.x1 >= edges[k].r && ob.x2 <= edges[k + 1].l){
       return "in the gap between " + (k + 1) + " and " + (k + 2) + " — " +
@@ -707,10 +886,13 @@ function drawRun(r, o, u){
   const host = document.createElement("div");
   host.className = "pole";
   const Lin = r.L / U, Win = o.W / U, gIn = u.g / U;
-  const SVGW = 344, padX = 10, padTop = 8, padBot = 32;
-  const sx = Math.min(4.5, (SVGW - padX * 2) / Lin);
-  const drawW = Lin * sx, x0 = (SVGW - drawW) / 2;
-  const topIn = Math.max(state.boxBottom + state.boxH + 4, state.baseH + 4);
+  const st = r.st, B = st.ok ? st.boxes : [], stacked = st.n > 1;
+  const SVGW = 344, padX = 10, padR = stacked ? 40 : 10, padTop = 8, padBot = 32;
+  const ceilIn = state.baseH + state.wallH;
+  const topIn = stacked ? ceilIn + 2 : Math.max(state.boxBottom + state.boxH + 4, state.baseH + 4);
+  let sx = Math.min(4.5, (SVGW - padX - padR) / Lin);
+  if(stacked) sx = Math.min(sx, 420 / topIn);          // keep a tall wall from running off the screen
+  const drawW = Lin * sx, x0 = padX + ((SVGW - padX - padR) - drawW) / 2;
   const SVGH = topIn * sx + padTop + padBot, floorY = SVGH - padBot;
   const X = function(v){ return x0 + v * sx; }, Y = function(v){ return floorY - v * sx; };
   const pid = "hatch" + Math.abs(Math.round(r.L * 7 + o.N * 13));
@@ -723,14 +905,44 @@ function drawRun(r, o, u){
     const dash = pr[1] === "corner" ? "" : ' stroke-dasharray="4 3"';
     s += '<line x1="' + X(pr[0]) + '" y1="' + padTop + '" x2="' + X(pr[0]) + '" y2="' + floorY + '" stroke="#16202A" stroke-width="2"' + dash + "/>";
   });
-  const yTop = Y(state.boxBottom + state.boxH), hBox = state.boxH * sx, tPx = state.stock * sx;
+  if(stacked){
+    s += '<line x1="' + X(0) + '" y1="' + Y(ceilIn) + '" x2="' + X(Lin) + '" y2="' + Y(ceilIn) + '" stroke="#16202A" stroke-width="2"/>';
+  }
+  const tPx = state.stock * sx;
   for(let k = 0; k < o.N; k++){
     const xl = (o.mL + k * (o.W + u.g)) / U;
-    s += '<rect x="' + X(xl) + '" y="' + yTop + '" width="' + (Win * sx) + '" height="' + hBox + '" fill="#1F5FA8" opacity="0.9"/>';
-    if(Win - 2 * state.stock > 0 && state.boxH - 2 * state.stock > 0){
-      s += '<rect x="' + (X(xl) + tPx) + '" y="' + (yTop + tPx) + '" width="' + ((Win - 2 * state.stock) * sx) +
-           '" height="' + ((state.boxH - 2 * state.stock) * sx) + '" fill="#F7F8F3"/>';
-    }
+    B.forEach(function(b){
+      const yTop = Y(b.hi), hBox = (b.hi - b.lo) * sx;
+      s += '<rect x="' + X(xl) + '" y="' + yTop + '" width="' + (Win * sx) + '" height="' + hBox + '" fill="#1F5FA8" opacity="0.9"/>';
+      if(Win - 2 * state.stock > 0 && (b.hi - b.lo) - 2 * state.stock > 0){
+        s += '<rect x="' + (X(xl) + tPx) + '" y="' + (yTop + tPx) + '" width="' + ((Win - 2 * state.stock) * sx) +
+             '" height="' + ((b.hi - b.lo - 2 * state.stock) * sx) + '" fill="#F7F8F3"/>';
+      }
+    });
+  }
+  if(stacked && B.length){
+    // Vertical string up the right side: base, each box, ceiling.
+    const dx = X(Lin) + 14;
+    s += '<line x1="' + dx + '" y1="' + Y(state.baseH) + '" x2="' + dx + '" y2="' + Y(ceilIn) + '" stroke="#B08D14" stroke-width="1"/>';
+    const ticks = [state.baseH, ceilIn];
+    B.forEach(function(b){ ticks.push(b.lo, b.hi); });
+    ticks.forEach(function(v){
+      s += '<line x1="' + (dx - 3) + '" y1="' + Y(v) + '" x2="' + (dx + 3) + '" y2="' + Y(v) + '" stroke="#B08D14" stroke-width="1"/>';
+    });
+    const vlab = function(fromIn, sizeIn, txt, px, weight, color, force){
+      const room = sizeIn * sx, need = function(size){ return txt.length * size * 0.62 + 4; };
+      if(room < need(px)){ if(!force) return ""; while(px > 6 && room < need(px)) px -= 0.5; }
+      const cy = Y(fromIn + sizeIn / 2);
+      return '<text transform="translate(' + (dx + 12) + " " + cy + ') rotate(-90)" font-family="ui-monospace,monospace" font-size="' + px +
+             '" font-weight="' + weight + '" fill="' + color + '" text-anchor="middle">' + txt + "</text>";
+    };
+    const bot = B[B.length - 1];
+    s += vlab(state.baseH, bot.lo - state.baseH, fmtFrac(bot.lo - state.baseH, U), 7.5, 400, "#8A949E");
+    B.forEach(function(b, i){
+      s += vlab(b.lo, b.hi - b.lo, fmtFrac(b.hi - b.lo, U), 8.5, 600, "#B08D14", true);
+      if(i < B.length - 1) s += vlab(B[i + 1].hi, b.lo - B[i + 1].hi, fmtFrac(b.lo - B[i + 1].hi, U), 7.5, 400, "#8A949E");
+    });
+    s += vlab(B[0].hi, ceilIn - B[0].hi, fmtFrac(ceilIn - B[0].hi, U), 7.5, 400, "#8A949E");
   }
   r.obs.forEach(function(ob){
     s += '<rect x="' + X(ob.x1 / U) + '" y="' + Y(ob.h2) + '" width="' + ((ob.x2 - ob.x1) / U * sx) +
@@ -777,33 +989,105 @@ function drawRun(r, o, u){
 
 /* ============================ cut list ============================ */
 function renderCutList(picked, u){
-  const U = u.U, H = state.boxH, t = state.stock;
+  const U = u.U, t = state.stock, st = solveStack();
+  const heights = st.ok ? st.boxes.map(function(b){ return b.h; }) : [state.boxH];
+  const nb = heights.length;
   const byW = {};
-  picked.forEach(function(p){ byW[p.o.W] = (byW[p.o.W] || 0) + p.o.N; });
+  let cols = 0;
+  picked.forEach(function(p){ byW[p.o.W] = (byW[p.o.W] || 0) + p.o.N; cols += p.o.N; });
   const widths = Object.keys(byW).map(Number).sort(function(a, b){ return a - b; });
+  // Stiles don't care how wide the box is, so they're grouped by length.
+  const byH = {};
+  heights.forEach(function(h){ const k = h.toFixed(5); byH[k] = (byH[k] || 0) + 1; });
+  const hKeys = Object.keys(byH).sort(function(a, b){ return parseFloat(b) - parseFloat(a); });
   let lineal = 0, pieces = 0;
   let html = '<table class="marks"><thead><tr><th>Piece</th><th>Long point</th><th>Short point</th><th>Qty</th></tr></thead><tbody>';
   widths.forEach(function(W){
-    const n = byW[W], Win = W / U;
-    lineal += n * 2 * (Win + H) / 12; pieces += n * 4;
+    const qty = byW[W] * nb * 2, Win = W / U;
+    lineal += qty * Win / 12; pieces += qty;
     html += "<tr><td>Rails · " + fmtFrac(Win, U) + '" box</td><td><span class="prime">' + fmtFrac(Win, U) +
-      '"</span></td><td>' + fmtFrac(Win - 2 * t, U) + '"</td><td>' + (n * 2) + "</td></tr>";
-    html += "<tr><td>Stiles · " + fmtFrac(Win, U) + '" box</td><td><span class="prime">' + fmtFrac(H, U) +
-      '"</span></td><td>' + fmtFrac(H - 2 * t, U) + '"</td><td>' + (n * 2) + "</td></tr>";
+      '"</span></td><td>' + fmtFrac(Win - 2 * t, U) + '"</td><td>' + qty + "</td></tr>";
+  });
+  hKeys.forEach(function(k){
+    const H = parseFloat(k), qty = cols * byH[k] * 2;
+    lineal += qty * H / 12; pieces += qty;
+    html += "<tr><td>Stiles · " + fmtFrac(H, U) + '" tall</td><td><span class="prime">' + fmtFrac(H, U) +
+      '"</span></td><td>' + fmtFrac(H - 2 * t, U) + '"</td><td>' + qty + "</td></tr>";
   });
   html += "</tbody></table>";
   html += '<div class="summary">' +
     '<div><span class="k">Pieces</span><span class="v">' + pieces + "</span></div>" +
     '<div><span class="k">Lineal, net</span><span class="v">' + lineal.toFixed(1) + " ft</span></div>" +
     '<div><span class="k">Order at +15%</span><span class="v">' + Math.ceil(lineal * 1.15) + " ft</span></div>" +
-    '<div><span class="k">Box sizes</span><span class="v">' + widths.length + "</span></div></div>";
+    '<div><span class="k">Box sizes</span><span class="v">' + (widths.length * hKeys.length) + "</span></div></div>";
   html += '<p class="note">All miters 45&deg;. Long point is the outside dimension, short point the inside.</p>';
   $("cutlist").innerHTML = html;
   $("cutPanel").hidden = false;
 }
 
+/* ============================ stack chooser + marks ============================ */
+function renderStack(){
+  const single = state.stack === "1";
+  $("singleFields").hidden = !single;
+  $("stackFields").hidden = single;
+  $("baseHint").textContent = single ? "(drawing only)" : "(outlets are off the floor)";
+  if(single) return;
+  const st = solveStack(), host = $("stackOpts"), U = state.rez, def = STACKS[state.stack];
+  host.innerHTML = "";
+  if(!st.ok){ $("stackNote").textContent = st.err; return; }
+  st.cands.forEach(function(c){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "opt stk";
+    b.setAttribute("aria-pressed", String(c === st.pick));
+    let ratio = "even";
+    if(state.stack === "21") ratio = c.ratio.toFixed(2) + " : 1";
+    if(state.stack === "121") ratio = "1 : " + c.ratio.toFixed(2) + " : 1";
+    let six = "";
+    if(c.sixes.length === c.hs.length) six = "every box on 6\"";
+    else if(c.sixes.length){
+      const h = c.hs[c.sixes[0]];
+      six = c.sixes.map(function(i){ return def.names[i]; }).join(" & ") + " " + fmtFrac(h / U, U) + '" (' + (h / Math.round(6 * U)) + '×6")';
+    } else if(state.stack !== "2e") six = "exact split";
+    b.innerHTML =
+      '<span class="cnt">' + (c.sixes.length ? '6"' : (state.stack === "2e" ? "=" : "exact")) + "</span>" +
+      '<span class="w">' + c.hs.map(function(h){ return fmtFrac(h / U, U) + '"'; }).join(" / ") + "</span>" +
+      '<span class="why">' + ratio + (six ? " · " + six : "") + "</span>";
+    b.onclick = function(){ state.stackPick = c.key; refresh(); };
+    host.appendChild(b);
+  });
+  let note = "Heights read top to bottom. " + fmtFrac(st.S / U, U) + '" of box after margins and gaps.';
+  if(st.pick.left) note += " The leftover " + fmtFrac(st.pick.left / U, U) + '" goes into the top margin.';
+  if(state.stack !== "2e" && !st.pick.sixes.length && st.cands.some(function(c){ return c.sixes.length; }) && st.auto){
+    note += ' The closest 6" split bends the ratio too far, so the exact split is picked.';
+  }
+  $("stackNote").textContent = note;
+}
+function stackBlock(st){
+  const block = document.createElement("div");
+  block.className = "runblock";
+  if(!st.ok){
+    block.innerHTML = '<p class="runname">Stack</p><div class="hit no">' + st.err + "</div>";
+    return block;
+  }
+  const U = st.U;
+  let html = '<p class="runname">Stack — every column, every wall</p>' +
+    '<p class="runmeta">Measured up from the top of the ' + fmtFrac(state.baseH) + '" base · ' +
+    fmtFrac(st.vg / U, U) + '" between boxes · ' + fmtFrac(st.mB / U, U) + '" off the base · ' +
+    fmtFrac(st.topMargin, U) + '" to the ceiling</p>' +
+    '<table class="marks"><thead><tr><th>Box</th><th>Height</th><th>Bottom edge</th><th>Top edge</th></tr></thead><tbody>';
+  st.boxes.forEach(function(b){
+    html += "<tr><td class='no'>" + b.name + "</td><td>" + fmtFrac(b.h, U) + '"</td>' +
+      '<td><span class="prime">' + fmtFrac(b.bot, U) + '"</span></td>' +
+      '<td><span class="prime">' + fmtFrac(b.top, U) + '"</span></td></tr>';
+  });
+  html += "</tbody></table>";
+  block.innerHTML = html;
+  return block;
+}
+
 /* ============================ inputs ============================ */
-function refresh(){ syncNotes(); renderRuns(); renderLayout(); autosave(); }
+function refresh(){ syncNotes(); renderStack(); renderRuns(); renderLayout(); autosave(); }
 
 function bindMeasure(id, key, resets){
   const el = $(id);
@@ -813,13 +1097,19 @@ function bindMeasure(id, key, resets){
     if(v !== null){
       state[key] = v;
       if(resets) state.runs.forEach(function(r){ r.pick = null; });
+      if(STACK_KEYS.indexOf(key) >= 0) state.stackPick = null;
       refresh();
     }
   };
   el.onblur = function(){ const v = parseMeasure(el.value); if(v !== null){ el.value = fmtFrac(v); el.classList.remove("bad"); } };
 }
 bindMeasure("gap", "gap", true);
-["stock","boxH","boxBottom","baseH","plateH","wMin","wMax","clear"].forEach(function(k){ bindMeasure(k, k, false); });
+["stock","boxH","boxBottom","baseH","plateH","wMin","wMax","clear","wallH","vgap","mBot","mTop"].forEach(function(k){ bindMeasure(k, k, false); });
+$("stackSel").onchange = function(){
+  state.stack = $("stackSel").value;
+  state.stackPick = null;
+  refresh();
+};
 
 Array.prototype.forEach.call(document.querySelectorAll(".stepper button"), function(b){
   b.onclick = function(){
@@ -829,6 +1119,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".stepper button"), funct
     el.value = fmtFrac(nv); el.classList.remove("bad");
     state[id] = nv;
     if(id === "gap") state.runs.forEach(function(r){ r.pick = null; });
+    if(STACK_KEYS.indexOf(id) >= 0) state.stackPick = null;
     refresh();
   };
 });
@@ -871,10 +1162,12 @@ const AUTO = "chalkline.autosave";
 
 function snapshot(){
   return {
-    v:1, when:Date.now(),
+    v:2, when:Date.now(),
     rez:state.rez, gap:state.gap, stock:state.stock, boxH:state.boxH, boxBottom:state.boxBottom,
     baseH:state.baseH, plateH:state.plateH, wMin:state.wMin, wMax:state.wMax, clear:state.clear,
-    slideMax:state.slideMax, cornerHalf:state.cornerHalf, runs:state.runs
+    slideMax:state.slideMax, cornerHalf:state.cornerHalf,
+    stack:state.stack, wallH:state.wallH, vgap:state.vgap, mBot:state.mBot, mTop:state.mTop, stackPick:state.stackPick,
+    runs:state.runs
   };
 }
 function applySnapshot(snap){
@@ -942,7 +1235,8 @@ $("delPreset").onclick = function(){
   $("storeNote").textContent = "Deleted " + k + ".";
 };
 function pushToInputs(){
-  ["gap","stock","boxH","boxBottom","baseH","plateH","wMin","wMax","clear"].forEach(function(k){ $(k).value = fmtFrac(state[k]); });
+  ["gap","stock","boxH","boxBottom","baseH","plateH","wMin","wMax","clear","wallH","vgap","mBot","mTop"].forEach(function(k){ $(k).value = fmtFrac(state[k]); });
+  $("stackSel").value = state.stack;
   $("cornerHalf").checked = state.cornerHalf;
   Array.prototype.forEach.call($("rezSeg").querySelectorAll("button"), function(b){
     b.setAttribute("aria-pressed", String(parseInt(b.getAttribute("data-rez"), 10) === state.rez));

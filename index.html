@@ -243,9 +243,13 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
     <button class="btn sm" type="button" id="delPreset">Delete</button>
   </div>
   <p class="note" id="storeNote"></p>
+  <div class="row-actions" style="border-top:1px solid var(--rule-soft);padding-top:10px;margin-top:12px">
+    <span class="note" id="autoNote" style="margin:0;flex:1;min-width:150px"></span>
+    <button class="btn sm" type="button" id="freshStart">Start fresh</button>
+  </div>
 </section>
 
-<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-08-23f</span> · <span id="offline">checking offline…</span></footer>
+<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-10-06</span> · <span id="offline">checking offline…</span></footer>
 </div>
 
 <script>
@@ -415,6 +419,7 @@ const RUN_PAINT = [];
 function renderAnswers(){
   RUN_PAINT.forEach(function(f){ f(); });
   renderLayout();
+  autosave();
 }
 function bindObNum(inp, o, key){
   inp.value = fmtFrac(o[key]);
@@ -798,7 +803,7 @@ function renderCutList(picked, u){
 }
 
 /* ============================ inputs ============================ */
-function refresh(){ syncNotes(); renderRuns(); renderLayout(); }
+function refresh(){ syncNotes(); renderRuns(); renderLayout(); autosave(); }
 
 function bindMeasure(id, key, resets){
   const el = $(id);
@@ -862,6 +867,46 @@ function syncNotes(){
 
 /* ============================ saved jobs ============================ */
 const KEY = "chalkline.jobs";
+const AUTO = "chalkline.autosave";
+
+function snapshot(){
+  return {
+    v:1, when:Date.now(),
+    rez:state.rez, gap:state.gap, stock:state.stock, boxH:state.boxH, boxBottom:state.boxBottom,
+    baseH:state.baseH, plateH:state.plateH, wMin:state.wMin, wMax:state.wMax, clear:state.clear,
+    slideMax:state.slideMax, cornerHalf:state.cornerHalf, runs:state.runs
+  };
+}
+function applySnapshot(snap){
+  Object.keys(snap).forEach(function(k){
+    if(k === "v" || k === "when") return;
+    state[k] = snap[k];
+  });
+  normalizeObs();
+}
+
+/* Autosave. The phone can kill this page at any moment — a stray back swipe,
+   an incoming call, the OS reclaiming memory — so the room in progress is
+   written out continuously and restored on the next launch without asking. */
+let autoTimer = null;
+function flushAuto(){
+  if(autoTimer){ clearTimeout(autoTimer); autoTimer = null; }
+  try{ localStorage.setItem(AUTO, JSON.stringify(snapshot())); }catch(e){}
+}
+function autosave(){
+  if(autoTimer) clearTimeout(autoTimer);
+  autoTimer = setTimeout(flushAuto, 400);
+}
+function autoStamp(){
+  let when = null;
+  try{
+    const raw = localStorage.getItem(AUTO);
+    if(raw) when = JSON.parse(raw).when;
+  }catch(e){}
+  $("autoNote").textContent = when
+    ? ("Saved automatically — last change " + new Date(when).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + ".")
+    : "Saved automatically as you work.";
+}
 function readStore(){ try{ return JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){ return {}; } }
 function writeStore(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); return true; }catch(e){ return false; } }
 function renderPresets(){
@@ -874,21 +919,22 @@ $("savePreset").onclick = function(){
   const name = prompt("Save this job as:");
   if(!name) return;
   const jobs = readStore();
-  jobs[name] = JSON.parse(JSON.stringify({
-    rez:state.rez, gap:state.gap, stock:state.stock, boxH:state.boxH, boxBottom:state.boxBottom,
-    baseH:state.baseH, plateH:state.plateH, wMin:state.wMin, wMax:state.wMax, clear:state.clear,
-    slideMax:state.slideMax, cornerHalf:state.cornerHalf, runs:state.runs
-  }));
+  jobs[name] = JSON.parse(JSON.stringify(snapshot()));
   $("storeNote").textContent = writeStore(jobs) ? ("Saved " + name + ".") : "Storage is blocked in this browser — nothing was saved.";
   renderPresets();
 };
 $("loadPreset").onclick = function(){
   const k = $("presetSel").value; if(!k) return;
   const jobs = readStore(); if(!jobs[k]) return;
-  Object.keys(jobs[k]).forEach(function(p){ state[p] = jobs[k][p]; });
-  normalizeObs();
+  applySnapshot(jobs[k]);
   pushToInputs(); refresh();
   $("storeNote").textContent = "Loaded " + k + ".";
+};
+$("freshStart").onclick = function(){
+  if(!confirm("Clear the current room and start over? Saved jobs are not affected.")) return;
+  try{ localStorage.removeItem(AUTO); }catch(e){}
+  state.runs = [{ name:"Wall 1", L:120, left:"corner", right:"corner", obs:[], pick:null }];
+  pushToInputs(); refresh(); autoStamp();
 };
 $("delPreset").onclick = function(){
   const k = $("presetSel").value; if(!k) return;
@@ -907,10 +953,25 @@ function pushToInputs(){
 }
 
 /* ============================ boot ============================ */
+try{
+  const raw = localStorage.getItem(AUTO);
+  if(raw){
+    const snap = JSON.parse(raw);
+    if(snap && snap.runs && snap.runs.length) applySnapshot(snap);
+  }
+}catch(e){}
+
 normalizeObs();
 pushToInputs();
 refresh();
 renderPresets();
+autoStamp();
+
+window.addEventListener("pagehide", flushAuto);
+window.addEventListener("beforeunload", flushAuto);
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState === "hidden") flushAuto();
+});
 
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js")

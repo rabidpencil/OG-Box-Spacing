@@ -196,7 +196,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
   </div>
   <div id="stackFields" hidden>
     <div class="grid2" style="margin-top:10px">
-      <label class="f"><span class="lab">Top of base to ceiling</span>
+      <label class="f"><span class="lab" id="wallHLab">Top of base to ceiling</span>
         <span class="stepper">
           <button type="button" data-step="-0.125" data-for="wallH">&minus;</button>
           <input type="text" id="wallH" value="90 1/2">
@@ -225,6 +225,10 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
         </span>
       </label>
     </div>
+    <div class="row-actions">
+      <label class="toggle"><input type="checkbox" id="mixed"> Some walls have a higher ceiling</label>
+    </div>
+    <p class="note" id="mixedNote" hidden>Set the height above to the lowest ceiling. On each higher wall, enter its own ceiling and it gets a box added on top — the same gap above the shared stack and the same margin below its ceiling.</p>
     <div class="opts" id="stackOpts"></div>
     <p class="note" id="stackNote"></p>
   </div>
@@ -235,7 +239,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
   <div class="grid3" style="margin-top:10px">
     <label class="f"><span class="lab">Ignore widths under</span><input type="text" id="wMin" value="16"></label>
     <label class="f"><span class="lab">Ignore widths over</span><input type="text" id="wMax" value="60"></label>
-    <label class="f"><span class="lab">Clear of plates by</span><input type="text" id="clear" value="0"></label>
+    <label class="f"><span class="lab">Clear of outlets by</span><input type="text" id="clear" value="0"></label>
   </div>
   <div class="grid2" style="margin-top:10px">
     <div class="f">
@@ -247,15 +251,23 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
       </div>
     </div>
     <div class="f">
-      <span class="lab">May slide off center to dodge an outlet</span>
-      <div class="seg tiny" id="slideSeg" role="group" aria-label="Slide allowance">
-        <button type="button" data-slide="0" aria-pressed="true">no</button>
-        <button type="button" data-slide="0.5" aria-pressed="false">1/2"</button>
-        <button type="button" data-slide="1" aria-pressed="false">1"</button>
-        <button type="button" data-slide="2" aria-pressed="false">2"</button>
+      <span class="lab">A box may shrink to clear an outlet</span>
+      <div class="seg tiny" id="flexSeg" role="group" aria-label="Box shrink allowance">
+        <button type="button" data-flex="0" aria-pressed="true">no</button>
+        <button type="button" data-flex="0.125" aria-pressed="false">1/8"</button>
+        <button type="button" data-flex="0.25" aria-pressed="false">1/4"</button>
+        <button type="button" data-flex="0.5" aria-pressed="false">1/2"</button>
       </div>
     </div>
   </div>
+  <div class="f" id="flexModeRow" style="margin-top:10px" hidden>
+    <span class="lab">Make up the width from</span>
+    <div class="seg tiny" id="flexModeSeg" role="group" aria-label="Where the width goes">
+      <button type="button" data-mode="neighbor" aria-pressed="true">The neighbor box</button>
+      <button type="button" data-mode="all" aria-pressed="false">All other boxes</button>
+    </div>
+  </div>
+  <p class="note" id="flexNote" hidden></p>
   <div class="grid2" style="margin-top:10px">
     <label class="f"><span class="lab">Base height <span style="color:var(--ink-3)" id="baseHint">(drawing only)</span></span><input type="text" id="baseH" value="5 1/2"></label>
     <label class="f"><span class="lab">Cover plate height</span><input type="text" id="plateH" value="4 1/2"></label>
@@ -264,7 +276,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
 
 <section class="panel">
   <p class="eyebrow">Walls</p>
-  <p class="note" style="margin-top:0">One run per clear span — a wall with a door in it is two runs. Outlets are measured to a plate edge, not a center — pick the end you'd actually pull your tape from. L means left end of the run to the left edge of the plate; R means right end to the right edge. Same idea vertically: floor to the bottom edge, or floor to the top. Tap a box count to lay it out.</p>
+  <p class="note" style="margin-top:0">One run per clear span — a wall with a door in it is two runs. Outlets and switches are measured to a plate edge, not a center — pick the end you'd actually pull your tape from. L means left end of the run to the left edge of the plate; R means right end to the right edge. Same idea vertically: floor to the bottom edge, or floor to the top. Light fixtures are the exception: measure to their center, both ways. Tap a box count to lay it out.</p>
   <div id="runs"></div>
   <div class="row-actions">
     <button class="btn sm" type="button" id="addRun">+ Add wall</button>
@@ -280,7 +292,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
 </section>
 
 <section class="panel" id="cutPanel" hidden>
-  <p class="eyebrow">Cut list</p>
+  <p class="eyebrow">Material</p>
   <div id="cutlist"></div>
 </section>
 
@@ -299,7 +311,7 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align
   </div>
 </section>
 
-<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-10-06b</span> · <span id="offline">checking offline…</span></footer>
+<footer class="foot">Enter fractions or decimals — 33 1/2, 33-1/2, or 33.5.<br><span id="ver">build 2026-11-12</span> · <span id="offline">checking offline…</span></footer>
 </div>
 
 <script>
@@ -352,11 +364,11 @@ const state = {
   rez: 16,
   gap: 5, stock: 1.125, boxH: 30, boxBottom: 8, baseH: 5.5, plateH: 4.5,
   stack: "1", wallH: 90.5, vgap: 5, mBot: 5, mTop: 5, stackPick: null,
-  wMin: 16, wMax: 60, clear: 0, slideMax: 0,
+  wMin: 16, wMax: 60, clear: 0, flexMax: 0, flexMode: "neighbor", mixed: false,
   cornerHalf: true,
   runs: [
-    { name:"Wall 1", L:156, left:"corner", right:"corner", obs:[], pick:null },
-    { name:"Wall 2", L:98,  left:"corner", right:"casing", obs:[ {label:"outlet", ref:"right", at:41, w:2.75, vref:"bottom", h:12.75} ], pick:null }
+    { name:"Wall 1", L:156, left:"corner", right:"corner", obs:[], pick:null, ceil:null },
+    { name:"Wall 2", L:98,  left:"corner", right:"casing", obs:[ {kind:"plate", label:"outlet", ref:"right", at:41, w:2.75, vref:"bottom", h:12.75} ], pick:null, ceil:null }
   ]
 };
 const $ = function(id){ return document.getElementById(id); };
@@ -365,7 +377,7 @@ const $ = function(id){ return document.getElementById(id); };
 function units(){
   const U = state.rez, q = function(x){ return Math.round(x * U); };
   return { U:U, q:q, g:q(state.gap), t:q(state.stock), clear:q(state.clear),
-           slide:q(state.slideMax), wMin:q(state.wMin), wMax:q(state.wMax) };
+           wMin:q(state.wMin), wMax:q(state.wMax) };
 }
 function targetMargin(kind, g){
   // Stopping half a gap short of an inside corner makes the wrap read as one
@@ -477,24 +489,77 @@ function solveStack(){
   return out;
 }
 
+/* ============================ mixed ceilings ============================
+   The room stack is solved on the lowest ceiling. A wall with a higher
+   ceiling keeps that stack exactly and gets one more box on top: the full
+   stacked gap above the shared stack, the full top margin below its own
+   ceiling, and whatever height is left in between.                         */
+function posNames(n){
+  if(n === 2) return ["top", "bottom"];
+  if(n === 3) return ["top", "middle", "bottom"];
+  if(n === 4) return ["top", "upper middle", "lower middle", "bottom"];
+  return [""];
+}
+function wallStack(run){
+  const st = solveStack();
+  if(!st.ok || st.n === 1 || !state.mixed) return st;
+  const U = st.U, q = function(x){ return Math.round(x * U); };
+  const out = Object.assign({}, st, { Fw:st.F / U, warn:null, extra:null });
+  if(run.ceil === null || run.ceil === undefined) return out;
+  const Fw = q(run.ceil);
+  out.Fw = Fw / U;
+  if(Fw < st.F){
+    out.warn = "This ceiling is lower than the room height. Set the room height to the lowest ceiling.";
+    return out;
+  }
+  if(Fw === st.F) return out;
+  const stackTop = q(st.boxes[0].top);               // off the base, units
+  const bot = stackTop + st.vg, top = Fw - st.mT, h = top - bot;
+  if(h <= 2 * q(state.stock)){
+    out.warn = "Only " + fmtFrac((Fw - stackTop) / U, U) + '" from the top of the stack to this ceiling — not enough for another box.';
+    return out;
+  }
+  const boxes = [{ h:h / U, bot:bot / U, top:top / U, lo:state.baseH + bot / U, hi:state.baseH + top / U, added:true }]
+    .concat(st.boxes.map(function(b){ return Object.assign({}, b); }));
+  const names = posNames(boxes.length);
+  boxes.forEach(function(b, i){ b.name = names[i]; });
+  out.boxes = boxes;
+  out.n = boxes.length;
+  out.extra = boxes[0];
+  out.topMargin = st.mT / U;
+  return out;
+}
+
+/* ============================ obstructions ============================ */
 function prepRun(run, u){
-  const st = solveStack(), B = st.ok ? st.boxes : [], t = state.stock, e = 1e-9;
+  const st = wallStack(run), B = st.ok ? st.boxes : [], U = u.U, c = u.clear / U, e = 1e-9;
   const L = u.q(run.L);
   const obs = run.obs.map(function(o){
-    // "at" runs from whichever end you picked, to the plate edge on that side.
-    const w = u.q(o.w), at = u.q(o.at);
-    const x1 = (o.ref === "right") ? (L - at - w) : at;
-    const h1 = (o.vref === "top") ? (o.h - state.plateH) : o.h;   // outlets stay floor-referenced
-    const h2 = h1 + state.plateH;
-    let vHit = false, railHit = false, inBox = -1;
+    const round = o.kind === "round";
+    let x1, x2, h1, h2, geo, rad = 0, cx = null;
+    if(round){
+      // Fixtures are measured to their center, both ways.
+      cx = (o.ref === "right") ? (L - u.q(o.at)) : u.q(o.at);
+      rad = o.d / 2;
+      x1 = cx - rad * U; x2 = cx + rad * U; h1 = o.h - rad; h2 = o.h + rad;
+      geo = { circ:true, cx:cx / U, cy:o.h, r:rad + c };
+    } else {
+      // "at" runs from whichever end you picked, to the plate edge on that side.
+      const w = u.q(o.w), at = u.q(o.at);
+      x1 = (o.ref === "right") ? (L - at - w) : at; x2 = x1 + w;
+      h1 = (o.vref === "top") ? (o.h - state.plateH) : o.h; h2 = h1 + state.plateH;   // outlets stay floor-referenced
+      geo = { circ:false, x1:x1 / U - c, x2:x2 / U + c, y1:h1 - c, y2:h2 + c };
+    }
+    const gy1 = geo.circ ? geo.cy - geo.r : geo.y1, gy2 = geo.circ ? geo.cy + geo.r : geo.y2;
+    let vHit = false, inBox = -1;
     B.forEach(function(b, i){
-      if(!(h2 > b.lo + e && h1 < b.hi - e)) return;
-      vHit = true;
-      if((h1 < b.lo + t - e && h2 > b.lo + e) || (h1 < b.hi - e && h2 > b.hi - t + e)) railHit = true;
-      else inBox = i;
+      if(gy2 > b.lo + e && gy1 < b.hi - e) vHit = true;
+      if(h1 >= b.lo + state.stock - e && h2 <= b.hi - state.stock + e) inBox = i;
     });
-    return { label:o.label, x1:x1, x2:x1 + w, h1:h1, h2:h2,
-             offWall:(x1 < 0 || x1 + w > L), vHit:vHit, railHit:railHit, inBox:inBox };
+    return { label:(o.label || (round ? "fixture" : "outlet")), round:round, rad:rad, cx:cx,
+             x1:x1, x2:x2, h1:h1, h2:h2, geo:geo,
+             xa:(geo.circ ? geo.cx - geo.r : geo.x1) * U, xb:(geo.circ ? geo.cx + geo.r : geo.x2) * U,
+             offWall:(x1 < 0 || x2 > L), vHit:vHit, inBox:inBox };
   });
   return { src:run, name:run.name, L:L, left:run.left, right:run.right, obs:obs, st:st };
 }
@@ -511,33 +576,201 @@ function normalizeObs(){
         o.vref = "bottom";
         delete o.pos; delete o.aff;
       }
+      if(!o.kind) o.kind = "plate";
+      if(o.kind === "round" && !(o.d > 0)) o.d = 6;
       if(!o.ref) o.ref = "left";
       if(!o.vref) o.vref = "bottom";
     });
     if(run.pick === undefined) run.pick = null;
+    if(run.ceil === undefined) run.ceil = null;
   });
 }
-function hits(r, mL, N, W, u){
+
+/* ============================ trim geometry ============================
+   Everything here is in inches. A box is its outer rectangle minus the field;
+   an obstruction is clear of it if it misses the outer rectangle entirely or
+   sits wholly inside the field. Circles are tested as circles, so a fixture
+   tucked near a box corner isn't blocked by its bounding square.            */
+function geoHits(g, x1, x2, y1, y2){
+  const e = 1e-9;
+  if(g.circ){
+    const dx = Math.max(x1 - g.cx, 0, g.cx - x2), dy = Math.max(y1 - g.cy, 0, g.cy - y2);
+    return dx * dx + dy * dy < g.r * g.r - e;
+  }
+  return g.x1 < x2 - e && g.x2 > x1 + e && g.y1 < y2 - e && g.y2 > y1 + e;
+}
+function geoInside(g, x1, x2, y1, y2){
+  const e = 1e-9;
+  if(g.circ) return g.cx - g.r >= x1 - e && g.cx + g.r <= x2 + e && g.cy - g.r >= y1 - e && g.cy + g.r <= y2 + e;
+  return g.x1 >= x1 - e && g.x2 <= x2 + e && g.y1 >= y1 - e && g.y2 <= y2 + e;
+}
+function frameHit(g, X1, X2, lo, hi, tH, tV){
+  if(!geoHits(g, X1, X2, lo, hi)) return null;
+  if(X2 - X1 > 2 * tH && hi - lo > 2 * tV && geoInside(g, X1 + tH, X2 - tH, lo + tV, hi - tV)) return null;
+  if(geoHits(g, X1, X2, lo, lo + tV) || geoHits(g, X1, X2, hi - tV, hi)) return "rail";
+  return "stile";
+}
+function edgesOf(mL, ws, g){
+  const out = [];
+  let x = mL;
+  for(let k = 0; k < ws.length; k++){ out.push({ l:x, r:x + ws[k] }); x += ws[k] + g; }
+  return out;
+}
+/* First trim conflict on the wall, rail before stile. "only" limits the check
+   to some of the obstructions. */
+function hits(r, edges, u, only){
+  const U = u.U, tH = u.t / U, tV = state.stock, B = r.st.ok ? r.st.boxes : [];
+  let found = null;
   for(let i = 0; i < r.obs.length; i++){
+    if(only && !only[i]) continue;
     const ob = r.obs[i];
     if(!ob.vHit) continue;
-    const a = ob.x1 - u.clear, b = ob.x2 + u.clear;
-    for(let k = 0; k < N; k++){
-      const x = mL + k * (W + u.g);
-      if(ob.railHit && a < x + W && b > x) return "rail";
-      if(a < x + u.t && b > x) return "stile";
-      if(a < x + W && b > x + W - u.t) return "stile";
+    for(let k = 0; k < edges.length; k++){
+      if(ob.xb <= edges[k].l || ob.xa >= edges[k].r) continue;
+      const X1 = edges[k].l / U, X2 = edges[k].r / U;
+      for(let j = 0; j < B.length; j++){
+        const h = frameHit(ob.geo, X1, X2, B[j].lo, B[j].hi, tH, tV);
+        if(h === "rail") return { type:"rail", label:ob.label };
+        if(h && !found) found = { type:"stile", label:ob.label };
+      }
+    }
+  }
+  return found;
+}
+
+/* ============================ box shrink ============================
+   Gaps and end margins never move. To clear an obstruction, box widths flex:
+   - neighbor: a gap slides over; the box on one side loses what the box on
+     the other side gains. Only those two boxes change.
+   - all: one box (or two) shrinks and every other box on the wall shares the
+     difference.
+   Both search for the smallest shrink that clears everything.               */
+function flexNeighbor(r, u, N, W, mL, m){
+  const G = N - 1;
+  if(G < 1) return null;
+  const g = u.g, x0 = [];
+  for(let k = 0; k < N; k++) x0.push(mL + k * (W + g));
+  function edgesFor(off){
+    const ed = [];
+    for(let k = 0; k < N; k++) ed.push({ l:x0[k] + (k > 0 ? off[k - 1] : 0), r:x0[k] + W + (k < N - 1 ? off[k] : 0) });
+    return ed;
+  }
+  const zero = []; for(let j = 0; j < G; j++) zero.push(0);
+  // Each gap only moves its own two stiles, so each gap can be solved on its
+  // own against the obstructions within reach of it.
+  const claimed = r.obs.map(function(){ return false; }), wins = [];
+  for(let j = 0; j < G; j++){
+    const a = x0[j] + W - u.t - m, b = x0[j] + W + g + u.t + m;
+    const sel = r.obs.map(function(ob){ return ob.vHit && ob.xb > a && ob.xa < b; });
+    sel.forEach(function(s, i){ if(s) claimed[i] = true; });
+    wins.push(sel);
+  }
+  if(hits(r, edgesFor(zero), u, claimed.map(function(c){ return !c; }))) return null;
+  const ok = [];
+  for(let j = 0; j < G; j++){
+    const vals = [];
+    if(!wins[j].some(Boolean)) vals.push(0);
+    else for(let d = -m; d <= m; d++){
+      const off = zero.slice(); off[j] = d;
+      if(!hits(r, edgesFor(off), u, wins[j])) vals.push(d);
+    }
+    if(!vals.length) return null;
+    ok.push(vals);
+  }
+  // Find the smallest shrink limit T that works, then, under T, move the gaps
+  // as little as possible. Box k changes by off[k] - off[k-1]; the two end
+  // boxes change by off[0] and -off[G-1].
+  let off = null, T = 0;
+  for(T = 1; T <= m && !off; T++){
+    let layer = ok[0].filter(function(d){ return Math.abs(d) <= T; })
+                     .map(function(d){ return { d:d, sum:Math.abs(d), back:null }; });
+    for(let j = 1; j < G && layer.length; j++){
+      const next = [];
+      ok[j].forEach(function(d){
+        let best = null;
+        layer.forEach(function(p){
+          if(Math.abs(d - p.d) > T) return;
+          if(!best || p.sum + Math.abs(d) < best.sum) best = { d:d, sum:p.sum + Math.abs(d), back:p };
+        });
+        if(best) next.push(best);
+      });
+      layer = next;
+    }
+    let end = null;
+    layer.forEach(function(c){ if(Math.abs(c.d) <= T && (!end || c.sum < end.sum)) end = c; });
+    if(end){ off = []; for(let c = end; c; c = c.back) off.unshift(c.d); }
+  }
+  if(!off) return null;
+  let mx = 0;
+  for(let k = 0; k < N; k++) mx = Math.max(mx, Math.abs((k < N - 1 ? off[k] : 0) - (k > 0 ? off[k - 1] : 0)));
+  const ed = edgesFor(off);
+  if(hits(r, ed, u)) return null;
+  return { ws:ed.map(function(e){ return e.r - e.l; }), max:mx };
+}
+function spreadWidths(N, W, shr){
+  const ws = []; for(let k = 0; k < N; k++) ws.push(W);
+  let D = 0;
+  Object.keys(shr).forEach(function(k){ ws[+k] -= shr[k]; D += shr[k]; });
+  // Odd sixteenths go to the boxes nearest the ends first.
+  const others = [];
+  for(let i = 0, a = 0, b = N - 1; a <= b; i++){
+    const k = (i % 2 === 0) ? a++ : b--;
+    if(!(k in shr)) others.push(k);
+  }
+  if(!others.length) return null;
+  const base = Math.floor(D / others.length);
+  let rem = D - base * others.length;
+  others.forEach(function(k){ ws[k] += base + (rem > 0 ? 1 : 0); if(rem > 0) rem--; });
+  return ws;
+}
+function flexSpread(r, u, N, W, mL, m, singlesOnly){
+  if(N < 2) return null;
+  function test(shr){
+    const ws = spreadWidths(N, W, shr);
+    if(!ws) return null;
+    let mx = 0;
+    for(let k = 0; k < N; k++) mx = Math.max(mx, Math.abs(ws[k] - W));
+    if(mx > m) return null;
+    return hits(r, edgesOf(mL, ws, u.g), u) ? null : { ws:ws, max:mx };
+  }
+  // One box shrinking is the rule; two only if no single box can do it.
+  // On a tie, the box nearest the obstruction is the one that gives.
+  const cs = r.obs.filter(function(ob){ return ob.vHit; }).map(function(ob){ return (ob.xa + ob.xb) / 2; });
+  const order = [];
+  for(let k = 0; k < N; k++){
+    const mid = mL + k * (W + u.g) + W / 2;
+    let d = Infinity; cs.forEach(function(c){ d = Math.min(d, Math.abs(c - mid)); });
+    order.push({ k:k, d:d });
+  }
+  order.sort(function(a, b){ return a.d - b.d; });
+  for(let s = 1; s <= m; s++){
+    for(let i = 0; i < N; i++){ const o = {}; o[order[i].k] = s; const t = test(o); if(t) return t; }
+  }
+  if(singlesOnly || N < 3) return null;
+  for(let s = 1; s <= m; s++){
+    const pairs = [];
+    for(let k1 = 0; k1 < N; k1++) for(let k2 = k1 + 1; k2 < N; k2++)
+      for(let d1 = 1; d1 <= s; d1++) for(let d2 = 1; d2 <= s; d2++)
+        if(Math.max(d1, d2) === s) pairs.push([k1, d1, k2, d2]);
+    pairs.sort(function(a, b){ return (a[1] + a[3]) - (b[1] + b[3]); });
+    for(let i = 0; i < pairs.length; i++){
+      const o = {}; o[pairs[i][0]] = pairs[i][1]; o[pairs[i][2]] = pairs[i][3];
+      const t = test(o); if(t) return t;
     }
   }
   return null;
 }
+function flexSolve(r, u, N, W, mL, m, hint){
+  return state.flexMode === "all" ? flexSpread(r, u, N, W, mL, m, hint) : flexNeighbor(r, u, N, W, mL, m);
+}
 
 /* For every box count that fits the wall the width is forced — gap and end
    margins are fixed, so N is the only lever. The rounding remainder is the one
-   loose thread; it gets pushed into the two end margins where nobody sees it. */
+   loose thread; it gets pushed into the two end margins where nobody sees it.
+   If an obstruction lands on the trim, boxes may flex (never the gaps). */
 function optionsFor(r, u){
   const tL = targetMargin(r.left, u.g), tR = targetMargin(r.right, u.g);
-  const out = [];
+  const flexM = u.q(state.flexMax), out = [];
   for(let N = 1; N <= 40; N++){
     const inner = r.L - tL - tR - (N - 1) * u.g;
     if(inner <= 0) break;
@@ -546,27 +779,42 @@ function optionsFor(r, u){
     const slack = r.L - (N * W + (N - 1) * u.g);
     const extra = slack - tL - tR;                 // pure rounding remainder
     const half = Math.floor(extra / 2);
-    let mL = tL + half, mR = slack - mL;
+    const mL = tL + half, mR = slack - mL;
     if(mL < 0 || mR < 0) continue;
-
-    let blocked = hits(r, mL, N, W, u), slid = 0;
-    if(blocked && u.slide > 0){
-      for(let d = 1; d <= u.slide; d++){
-        if(mL - d >= 0 && !hits(r, mL - d, N, W, u)){ mL -= d; mR += d; slid = -d; blocked = null; break; }
-        if(mR - d >= 0 && !hits(r, mL + d, N, W, u)){ mL += d; mR -= d; slid = d; blocked = null; break; }
+    const inBand = (W >= u.wMin && W <= u.wMax);
+    let ws = []; for(let k = 0; k < N; k++) ws.push(W);
+    let blocked = hits(r, edgesOf(mL, ws, u.g), u), flexed = false, need = 0;
+    if(blocked && N > 1 && inBand){
+      if(flexM > 0){
+        const sol = flexSolve(r, u, N, W, mL, flexM, false);
+        if(sol){ ws = sol.ws; blocked = null; flexed = true; }
+      }
+      if(blocked){
+        const h = flexSolve(r, u, N, W, mL, u.q(1), true);
+        if(h && flexM > 0 && h.max <= flexM){ ws = h.ws; blocked = null; flexed = true; }
+        else if(h) need = h.max;
       }
     }
-    let clears = 0;
-    if(blocked === "stile"){
-      const reach = u.q(6);
-      for(let d = 1; d <= reach; d++){
-        if((mL - d >= 0 && !hits(r, mL - d, N, W, u)) || (mR - d >= 0 && !hits(r, mL + d, N, W, u))){ clears = d; break; }
-      }
-    }
-    out.push({ N:N, W:W, mL:mL, mR:mR, blocked:blocked, slid:slid, clears:clears,
-               inBand:(W >= u.wMin && W <= u.wMax), drift:extra });
+    out.push({ N:N, W:W, ws:ws, edges:edgesOf(mL, ws, u.g), mL:mL, mR:mR, blocked:blocked,
+               flexed:flexed, need:need, inBand:inBand, drift:extra });
   }
   return out;
+}
+function flexText(o, U, word, sep){
+  const up = [], down = [];
+  o.ws.forEach(function(w, k){
+    if(w < o.W) down.push(word + " " + (k + 1) + " −" + fmtFrac((o.W - w) / U, U) + '"');
+    if(w > o.W) up.push({ k:k, d:w - o.W });
+  });
+  let grow;
+  if(up.length <= 2){
+    grow = up.map(function(x){ return word + " " + (x.k + 1) + " +" + fmtFrac(x.d / U, U) + '"'; }).join(", ");
+  } else {
+    let lo = Infinity, hi = 0;
+    up.forEach(function(x){ lo = Math.min(lo, x.d); hi = Math.max(hi, x.d); });
+    grow = "others +" + fmtFrac(lo / U, U) + (hi > lo ? "–" + fmtFrac(hi / U, U) : "") + '"';
+  }
+  return down.join(", ") + sep + grow;
 }
 
 /* ============================ wall editor + answers ============================ */
@@ -591,6 +839,7 @@ function renderRuns(){
   const host = $("runs");
   host.innerHTML = "";
   RUN_PAINT.length = 0;
+  const mixedOn = state.mixed && state.stack !== "1";
 
   state.runs.forEach(function(run, i){
     const card = document.createElement("div");
@@ -630,12 +879,34 @@ function renderRuns(){
     });
     card.appendChild(ends);
 
+    let ceilNote = null;
+    if(mixedOn){
+      const cf = document.createElement("label");
+      cf.className = "f";
+      cf.style.marginTop = "8px";
+      cf.innerHTML = '<span class="lab">Top of base to ceiling, this wall</span><input type="text" class="rc" placeholder="same as the room">';
+      const ci = cf.querySelector(".rc");
+      ci.value = (run.ceil === null || run.ceil === undefined) ? "" : fmtFrac(run.ceil);
+      ci.oninput = function(){
+        const t = ci.value.trim(), v = parseMeasure(t);
+        ci.classList.toggle("bad", v === null && t !== "");
+        if(t === ""){ run.ceil = null; renderAnswers(); }
+        else if(v !== null && v > 0){ run.ceil = v; renderAnswers(); }
+      };
+      ci.onblur = function(){ const v = parseMeasure(ci.value); if(v !== null) ci.value = fmtFrac(v); };
+      card.appendChild(cf);
+      ceilNote = document.createElement("p");
+      ceilNote.className = "note";
+      card.appendChild(ceilNote);
+    }
+
     const oh = document.createElement("div");
     oh.className = "obhead";
-    oh.innerHTML = "<span>Outlet / obstruction</span><span>Plate</span><span></span>";
+    oh.innerHTML = "<span>Outlet / obstruction</span><span>Size</span><span></span>";
     card.appendChild(oh);
 
     run.obs.forEach(function(o, j){
+      const round = o.kind === "round";
       const wrapOb = document.createElement("div");
       wrapOb.className = "obwrap";
 
@@ -645,24 +916,27 @@ function renderRuns(){
                        '<button type="button" class="kill">&times;</button>';
       const el = rowA.querySelector(".ol");
       el.value = o.label; el.oninput = function(){ o.label = el.value; };
-      bindObNum(rowA.querySelector(".ow"), o, "w");
+      const sz = rowA.querySelector(".ow");
+      sz.title = round ? "Diameter" : "Plate width";
+      bindObNum(sz, o, round ? "d" : "w");
       rowA.querySelector(".kill").onclick = function(){ run.obs.splice(j, 1); refresh(); };
       wrapOb.appendChild(rowA);
 
       const rowB = document.createElement("div");
       rowB.className = "obrow2";
       rowB.innerHTML =
-        '<div class="obfield"><span class="mini">Along the wall</span><div class="obline">' +
+        '<div class="obfield"><span class="mini">' + (round ? "Along the wall, to center" : "Along the wall") + '</span><div class="obline">' +
           '<div class="seg tiny xs"><button type="button" data-r="left">L</button><button type="button" data-r="right">R</button></div>' +
           '<input type="text" class="oat"></div></div>' +
-        '<div class="obfield"><span class="mini">Off the floor</span><div class="obline">' +
-          '<div class="seg tiny xs"><button type="button" data-v="bottom">Btm</button><button type="button" data-v="top">Top</button></div>' +
+        '<div class="obfield"><span class="mini">' + (round ? "Off the floor, to center" : "Off the floor") + '</span><div class="obline">' +
+          (round ? "" : '<div class="seg tiny xs"><button type="button" data-v="bottom">Btm</button><button type="button" data-v="top">Top</button></div>') +
           '<input type="text" class="oh"></div></div>';
       Array.prototype.forEach.call(rowB.querySelectorAll("[data-r]"), function(b){
         b.setAttribute("aria-pressed", String(o.ref === b.getAttribute("data-r")));
-        b.title = b.getAttribute("data-r") === "left"
-          ? "From the left end of this run to the left edge of the plate"
-          : "From the right end of this run to the right edge of the plate";
+        const left = b.getAttribute("data-r") === "left";
+        b.title = round ? ((left ? "From the left end" : "From the right end") + " of this run to the center of the fixture")
+                        : (left ? "From the left end of this run to the left edge of the plate"
+                                : "From the right end of this run to the right edge of the plate");
         b.onclick = function(){ o.ref = b.getAttribute("data-r"); refresh(); };
       });
       Array.prototype.forEach.call(rowB.querySelectorAll("[data-v]"), function(b){
@@ -680,15 +954,23 @@ function renderRuns(){
 
     const acts = document.createElement("div");
     acts.className = "row-actions";
-    [["+ 1-gang", 2.75, 12.75, "outlet"], ["+ 2-gang", 4.5, 12.75, "outlet"], ["+ switch", 2.75, 43.75, "switch"]].forEach(function(sp){
+    [["+ 1-gang", 2.75, 12.75, "outlet"], ["+ 2-gang", 4.5625, 12.75, "outlet"],
+     ["+ switch", 2.75, 43.75, "switch"], ["+ 2-gang switch", 4.5625, 43.75, "switch"]].forEach(function(sp){
       const b = document.createElement("button");
       b.className = "btn sm"; b.type = "button"; b.textContent = sp[0];
       b.onclick = function(){
-        run.obs.push({ label:sp[3], ref:"left", at:Math.round(run.L / 2), w:sp[1], vref:"bottom", h:sp[2] });
+        run.obs.push({ kind:"plate", label:sp[3], ref:"left", at:Math.round(run.L / 2), w:sp[1], vref:"bottom", h:sp[2] });
         refresh();
       };
       acts.appendChild(b);
     });
+    const fx = document.createElement("button");
+    fx.className = "btn sm"; fx.type = "button"; fx.textContent = "+ fixture";
+    fx.onclick = function(){
+      run.obs.push({ kind:"round", label:"fixture", ref:"left", at:Math.round(run.L / 2), d:6, h:66 });
+      refresh();
+    };
+    acts.appendChild(fx);
     card.appendChild(acts);
 
     // ---- what this wall can do ----
@@ -698,7 +980,18 @@ function renderRuns(){
 
     function paint(){
       const uu = units();
-      const opts = optionsFor(prepRun(run, uu), uu);
+      const r = prepRun(run, uu);
+      if(ceilNote){
+        const st = r.st;
+        ceilNote.className = "note";
+        if(st.warn){ ceilNote.textContent = st.warn; ceilNote.style.color = "var(--bad)"; }
+        else if(st.extra){
+          ceilNote.style.color = "";
+          ceilNote.textContent = "Adds a " + fmtFrac(st.extra.h, uu.U) + '" box on top, ' +
+            fmtFrac(st.extra.bot, uu.U) + '"–' + fmtFrac(st.extra.top, uu.U) + '" off the base.';
+        } else { ceilNote.style.color = ""; ceilNote.textContent = "Same stack as the room."; }
+      }
+      const opts = optionsFor(r, uu);
       const shown = opts.filter(function(o){ return o.inBand; });
       box.innerHTML = "";
       if(!shown.length){
@@ -710,20 +1003,22 @@ function renderRuns(){
         box.appendChild(p);
         return;
       }
+      const word = state.stack === "1" ? "box" : "col";
       shown.forEach(function(o){
         const b = document.createElement("button");
         b.type = "button";
         b.className = "opt" + (o.blocked ? " blocked" : "");
         b.setAttribute("aria-pressed", String(run.pick === o.N));
         let why;
-        if(o.blocked === "rail"){
-          why = state.stack === "1" ? "plate crosses a rail<br>move the box up or down"
-                                    : "plate crosses a rail<br>adjust the stack";
-        } else if(o.blocked === "stile"){
-          why = o.clears ? ("stile on a plate<br>clears with a " + fmtFrac(o.clears / uu.U, uu.U) + '" slide')
-                         : "stile on a plate";
-        } else if(o.slid){
-          why = "slid " + fmtFrac(Math.abs(o.slid) / uu.U, uu.U) + '" ' + (o.slid < 0 ? "left" : "right") + "<br>to clear an outlet";
+        if(o.blocked){
+          const what = o.blocked.type === "rail" ? (o.blocked.label + " crosses a rail") : ("stile on the " + o.blocked.label);
+          let fix = "";
+          if(o.need) fix = state.flexMax > 0 ? ("needs a " + fmtFrac(o.need / uu.U, uu.U) + '" shrink')
+                                             : ("clears if a box shrinks " + fmtFrac(o.need / uu.U, uu.U) + '"');
+          else if(o.blocked.type === "rail") fix = state.stack === "1" ? "move the box up or down" : "adjust the stack";
+          why = what + (fix ? "<br>" + fix : "");
+        } else if(o.flexed){
+          why = flexText(o, uu.U, word, "<br>");
         } else {
           why = fmtFrac(o.mL / uu.U, uu.U) + '" / ' + fmtFrac(o.mR / uu.U, uu.U) + '" ends';
         }
@@ -756,6 +1051,7 @@ function matchRoom(){
     $("matchNote").textContent = "At least one wall has no clear option inside the width limits — nothing to match against.";
     return;
   }
+  // Matched on the standard width; a box shrunk to clear an outlet doesn't count.
   const targets = [];
   sets.forEach(function(s){ s.forEach(function(o){ targets.push(o.W); }); });
   let bestSpread = Infinity, bestPick = null;
@@ -790,12 +1086,14 @@ function renderLayout(){
   if(!picked.length){ $("layoutPanel").hidden = true; $("cutPanel").hidden = true; return; }
 
   const st = solveStack();
-  let lo = Infinity, hi = -Infinity, cols = 0;
-  picked.forEach(function(p){ lo = Math.min(lo, p.o.W); hi = Math.max(hi, p.o.W); cols += p.o.N; });
+  let lo = Infinity, hi = -Infinity, boxes = 0;
+  picked.forEach(function(p){
+    lo = Math.min(lo, p.o.W); hi = Math.max(hi, p.o.W);
+    boxes += p.o.N * (p.r.st.ok ? p.r.st.boxes.length : 1);
+  });
   $("summary").innerHTML =
     '<div><span class="k">Walls laid out</span><span class="v">' + picked.length + "</span></div>" +
-    '<div><span class="k">Boxes' + (st.n > 1 ? " (" + cols + " cols × " + st.n + ")" : "") +
-      '</span><span class="v">' + (cols * st.n) + "</span></div>" +
+    '<div><span class="k">Boxes</span><span class="v">' + boxes + "</span></div>" +
     '<div><span class="k">Widths</span><span class="v">' +
       (lo === hi ? fmtFrac(lo / u.U, u.U) + '"' : fmtFrac(lo / u.U, u.U) + '"–' + fmtFrac(hi / u.U, u.U) + '"') + "</span></div>" +
     '<div><span class="k">Spread</span><span class="v">' + fmtFrac((hi - lo) / u.U, u.U) + '"</span></div>';
@@ -803,22 +1101,22 @@ function renderLayout(){
   if(st.n > 1) host.appendChild(stackBlock(st));
 
   picked.forEach(function(p, i){
-    const r = p.r, o = p.o, U = u.U;
+    const r = p.r, o = p.o, U = u.U, edges = o.edges, nb = r.st.ok ? r.st.boxes.length : 1;
     const block = document.createElement("div");
     block.className = "runblock";
-    const edges = [];
-    for(let k = 0; k < o.N; k++){ const x = o.mL + k * (o.W + u.g); edges.push({ l:x, r:x + o.W }); }
+    const stacked = state.stack !== "1";
 
     block.innerHTML =
       '<p class="runname">' + (r.name || ("Wall " + (i + 1))) + "</p>" +
-      '<p class="runmeta">' + ft(r.L / U) + " clear · " + o.N + (st.n > 1 ? " column" + (o.N === 1 ? "" : "s") + " of " + st.n
-                                                                     : " box" + (o.N === 1 ? "" : "es")) + " at " +
-      fmtFrac(o.W / U, U) + '" · ' + fmtFrac(u.g / U, U) + '" gaps · ends ' +
-      fmtFrac(o.mL / U, U) + '" / ' + fmtFrac(o.mR / U, U) + '"</p>';
+      '<p class="runmeta">' + ft(r.L / U) + " clear · " + o.N +
+        (stacked ? " column" + (o.N === 1 ? "" : "s") + " of " + nb : " box" + (o.N === 1 ? "" : "es")) + " at " +
+        fmtFrac(o.W / U, U) + '" · ' + fmtFrac(u.g / U, U) + '" gaps · ends ' +
+        fmtFrac(o.mL / U, U) + '" / ' + fmtFrac(o.mR / U, U) + '"</p>';
 
-    let html = '<table class="marks"><thead><tr><th>' + (st.n > 1 ? "Col" : "Box") + '</th><th>Left edge</th><th>Right edge</th><th>From far end</th></tr></thead><tbody>';
+    let html = '<table class="marks"><thead><tr><th>' + (stacked ? "Col" : "Box") + '</th><th>Left edge</th><th>Right edge</th><th>From far end</th></tr></thead><tbody>';
     edges.forEach(function(e, k){
-      html += "<tr><td class='no'>" + (k + 1) + "</td>" +
+      const odd = o.ws[k] !== o.W;
+      html += "<tr><td class='no'>" + (k + 1) + (odd ? "*" : "") + "</td>" +
         '<td><span class="prime">' + fmtFrac(e.l / U, U) + '"</span></td>' +
         '<td><span class="prime">' + fmtFrac(e.r / U, U) + '"</span></td>' +
         "<td>" + fmtFrac((r.L - e.r) / U, U) + '"</td></tr>';
@@ -827,11 +1125,38 @@ function renderLayout(){
     const t = document.createElement("div"); t.innerHTML = html;
     block.appendChild(t);
 
+    if(o.flexed){
+      const groups = {};
+      o.ws.forEach(function(w, k){ (groups[w] = groups[w] || []).push(k + 1); });
+      const keys = Object.keys(groups).map(Number).sort(function(a, b){ return b - a; });
+      const d = document.createElement("div");
+      d.className = "hit warn";
+      d.textContent = "* Widths: " + keys.map(function(w){
+        return fmtFrac(w / U, U) + '" (' + (stacked ? "col" : "box") + (groups[w].length > 1 ? (stacked ? "s " : "es ") : " ") + groups[w].join(", ") + ")";
+      }).join(" · ") + ". Every gap and end stays put.";
+      block.appendChild(d);
+    }
+    if(r.st.extra){
+      const d = document.createElement("div");
+      d.className = "hit";
+      d.textContent = "Higher ceiling: added top box " + fmtFrac(r.st.extra.h, U) + '" tall, ' +
+        fmtFrac(r.st.extra.bot, U) + '"–' + fmtFrac(r.st.extra.top, U) + '" off the base.';
+      block.appendChild(d);
+    }
+    if(r.st.warn){
+      const d = document.createElement("div");
+      d.className = "hit no";
+      d.textContent = r.st.warn;
+      block.appendChild(d);
+    }
+
     r.obs.forEach(function(ob){
       const d = document.createElement("div");
       d.className = "hit" + (ob.offWall ? " no" : (ob.vHit ? "" : " warn"));
-      d.textContent = (ob.label || "outlet") + " " + fmtFrac(ob.x1 / U, U) + '"–' + fmtFrac(ob.x2 / U, U) +
-        '" from the left end — ' + placement(ob, edges, u, r);
+      const where = ob.round
+        ? ob.label + " centered " + fmtFrac(ob.cx / U, U) + '" from the left end, ' + fmtFrac(ob.h1 + ob.rad, U) + '" up'
+        : ob.label + " " + fmtFrac(ob.x1 / U, U) + '"–' + fmtFrac(ob.x2 / U, U) + '" from the left end';
+      d.textContent = where + " — " + placement(ob, edges, u, r);
       block.appendChild(d);
     });
     block.appendChild(drawRun(r, o, u));
@@ -856,8 +1181,8 @@ function vClear(ob, st){
   return "clear of the boxes vertically";
 }
 function placement(ob, edges, u, r){
-  const U = u.U, st = r.st, word = st.n > 1 ? "column" : "box";
-  if(ob.offWall) return "that measurement puts the plate off the end of the wall — check the end you pulled from";
+  const U = u.U, st = r.st, word = state.stack !== "1" ? "column" : "box";
+  if(ob.offWall) return "that measurement puts it off the end of the wall — check the end you pulled from";
   if(!ob.vHit) return vClear(ob, st) + ", nothing to dodge";
   for(let k = 0; k < edges.length; k++){
     const e = edges[k];
@@ -877,6 +1202,24 @@ function placement(ob, edges, u, r){
         fmtFrac((ob.x1 - edges[k].r) / U, U) + '" / ' + fmtFrac((edges[k + 1].l - ob.x2) / U, U) + '" to the trim';
     }
   }
+  // Off a box corner (a round fixture can sit there without touching the trim).
+  let best = Infinity, bestK = 0;
+  edges.forEach(function(e, k){
+    (st.ok ? st.boxes : []).forEach(function(b){
+      const X1 = e.l / U, X2 = e.r / U;
+      let dist;
+      if(ob.round){
+        const cx = ob.cx / U, cy = ob.h1 + ob.rad;
+        const dx = Math.max(X1 - cx, 0, cx - X2), dy = Math.max(b.lo - cy, 0, cy - b.hi);
+        dist = Math.sqrt(dx * dx + dy * dy) - ob.rad;
+      } else {
+        const dx = Math.max(X1 - ob.x2 / U, 0, ob.x1 / U - X2), dy = Math.max(b.lo - ob.h2, 0, ob.h1 - b.hi);
+        dist = Math.sqrt(dx * dx + dy * dy);
+      }
+      if(dist < best){ best = dist; bestK = k; }
+    });
+  });
+  if(best > 1e-9) return "clear of the trim, " + fmtFrac(best, U) + '" off the corner of ' + word + " " + (bestK + 1);
   return "ON THE TRIM — check this one";
 }
 
@@ -885,10 +1228,10 @@ function drawRun(r, o, u){
   const U = u.U;
   const host = document.createElement("div");
   host.className = "pole";
-  const Lin = r.L / U, Win = o.W / U, gIn = u.g / U;
-  const st = r.st, B = st.ok ? st.boxes : [], stacked = st.n > 1;
+  const Lin = r.L / U, gIn = u.g / U, edges = o.edges;
+  const st = r.st, B = st.ok ? st.boxes : [], stacked = state.stack !== "1";
   const SVGW = 344, padX = 10, padR = stacked ? 40 : 10, padTop = 8, padBot = 32;
-  const ceilIn = state.baseH + state.wallH;
+  const ceilIn = state.baseH + (st.Fw !== undefined ? st.Fw : state.wallH);
   const topIn = stacked ? ceilIn + 2 : Math.max(state.boxBottom + state.boxH + 4, state.baseH + 4);
   let sx = Math.min(4.5, (SVGW - padX - padR) / Lin);
   if(stacked) sx = Math.min(sx, 420 / topIn);          // keep a tall wall from running off the screen
@@ -909,17 +1252,17 @@ function drawRun(r, o, u){
     s += '<line x1="' + X(0) + '" y1="' + Y(ceilIn) + '" x2="' + X(Lin) + '" y2="' + Y(ceilIn) + '" stroke="#16202A" stroke-width="2"/>';
   }
   const tPx = state.stock * sx;
-  for(let k = 0; k < o.N; k++){
-    const xl = (o.mL + k * (o.W + u.g)) / U;
+  edges.forEach(function(e, k){
+    const xl = e.l / U, Win = (e.r - e.l) / U, odd = o.ws[k] !== o.W;
     B.forEach(function(b){
       const yTop = Y(b.hi), hBox = (b.hi - b.lo) * sx;
-      s += '<rect x="' + X(xl) + '" y="' + yTop + '" width="' + (Win * sx) + '" height="' + hBox + '" fill="#1F5FA8" opacity="0.9"/>';
+      s += '<rect x="' + X(xl) + '" y="' + yTop + '" width="' + (Win * sx) + '" height="' + hBox + '" fill="' + (odd ? "#7A5F0C" : "#1F5FA8") + '" opacity="0.9"/>';
       if(Win - 2 * state.stock > 0 && (b.hi - b.lo) - 2 * state.stock > 0){
         s += '<rect x="' + (X(xl) + tPx) + '" y="' + (yTop + tPx) + '" width="' + ((Win - 2 * state.stock) * sx) +
              '" height="' + ((b.hi - b.lo - 2 * state.stock) * sx) + '" fill="#F7F8F3"/>';
       }
     });
-  }
+  });
   if(stacked && B.length){
     // Vertical string up the right side: base, each box, ceiling.
     const dx = X(Lin) + 14;
@@ -945,16 +1288,17 @@ function drawRun(r, o, u){
     s += vlab(B[0].hi, ceilIn - B[0].hi, fmtFrac(ceilIn - B[0].hi, U), 7.5, 400, "#8A949E");
   }
   r.obs.forEach(function(ob){
-    s += '<rect x="' + X(ob.x1 / U) + '" y="' + Y(ob.h2) + '" width="' + ((ob.x2 - ob.x1) / U * sx) +
-         '" height="' + ((ob.h2 - ob.h1) * sx) + '" fill="' + (ob.vHit ? "#B08D14" : "#8A949E") + '" opacity="0.95" rx="1"/>';
+    const fill = ob.vHit ? "#B08D14" : "#8A949E";
+    if(ob.round){
+      s += '<circle cx="' + X(ob.cx / U) + '" cy="' + Y(ob.h1 + ob.rad) + '" r="' + (ob.rad * sx) + '" fill="' + fill + '" opacity="0.95"/>';
+    } else {
+      s += '<rect x="' + X(ob.x1 / U) + '" y="' + Y(ob.h2) + '" width="' + ((ob.x2 - ob.x1) / U * sx) +
+           '" height="' + ((ob.h2 - ob.h1) * sx) + '" fill="' + fill + '" opacity="0.95" rx="1"/>';
+    }
   });
   const dimY = floorY + 13;
-  const marks = [0, o.mL / U];
-  for(let k = 0; k < o.N; k++){
-    const xl = (o.mL + k * (o.W + u.g)) / U;
-    marks.push(xl + Win);
-    if(k < o.N - 1) marks.push(xl + Win + gIn);
-  }
+  const marks = [0];
+  edges.forEach(function(e){ marks.push(e.l / U, e.r / U); });
   marks.push(Lin);
   s += '<line x1="' + X(0) + '" y1="' + dimY + '" x2="' + X(Lin) + '" y2="' + dimY + '" stroke="#B08D14" stroke-width="1"/>';
   marks.forEach(function(m){
@@ -978,50 +1322,30 @@ function drawRun(r, o, u){
     return '<text x="' + cx + '" y="' + textY + '" font-family="ui-monospace,monospace" font-size="' + px +
            '" font-weight="' + weight + '" fill="' + color + '" text-anchor="middle">' + txt + "</text>";
   }
+  const e0 = edges[0], W0 = (e0.r - e0.l) / U;
   s += span(0, o.mL / U, fmtFrac(o.mL / U, U), 7.5, 400, "#8A949E");
-  s += span(o.mL / U, Win, fmtFrac(Win, U), 8.5, 600, "#B08D14", true);
-  if(o.N > 1) s += span(o.mL / U + Win, gIn, fmtFrac(gIn, U), 7.5, 400, "#8A949E");
+  s += span(e0.l / U, W0, fmtFrac(W0, U), 8.5, 600, "#B08D14", true);
+  if(o.N > 1) s += span(e0.r / U, gIn, fmtFrac(gIn, U), 7.5, 400, "#8A949E");
   s += span(Lin - o.mR / U, o.mR / U, fmtFrac(o.mR / U, U), 7.5, 400, "#8A949E");
   s += "</svg>";
   host.innerHTML = s;
   return host;
 }
 
-/* ============================ cut list ============================ */
+/* ============================ material ============================ */
 function renderCutList(picked, u){
-  const U = u.U, t = state.stock, st = solveStack();
-  const heights = st.ok ? st.boxes.map(function(b){ return b.h; }) : [state.boxH];
-  const nb = heights.length;
-  const byW = {};
-  let cols = 0;
-  picked.forEach(function(p){ byW[p.o.W] = (byW[p.o.W] || 0) + p.o.N; cols += p.o.N; });
-  const widths = Object.keys(byW).map(Number).sort(function(a, b){ return a - b; });
-  // Stiles don't care how wide the box is, so they're grouped by length.
-  const byH = {};
-  heights.forEach(function(h){ const k = h.toFixed(5); byH[k] = (byH[k] || 0) + 1; });
-  const hKeys = Object.keys(byH).sort(function(a, b){ return parseFloat(b) - parseFloat(a); });
-  let lineal = 0, pieces = 0;
-  let html = '<table class="marks"><thead><tr><th>Piece</th><th>Long point</th><th>Short point</th><th>Qty</th></tr></thead><tbody>';
-  widths.forEach(function(W){
-    const qty = byW[W] * nb * 2, Win = W / U;
-    lineal += qty * Win / 12; pieces += qty;
-    html += "<tr><td>Rails · " + fmtFrac(Win, U) + '" box</td><td><span class="prime">' + fmtFrac(Win, U) +
-      '"</span></td><td>' + fmtFrac(Win - 2 * t, U) + '"</td><td>' + qty + "</td></tr>";
+  const U = u.U;
+  let lineal = 0;
+  picked.forEach(function(p){
+    const hs = p.r.st.ok ? p.r.st.boxes.map(function(b){ return b.h; }) : [state.boxH];
+    let hsum = 0; hs.forEach(function(h){ hsum += h; });
+    p.o.ws.forEach(function(w){ lineal += (2 * (w / U) * hs.length + 2 * hsum) / 12; });
   });
-  hKeys.forEach(function(k){
-    const H = parseFloat(k), qty = cols * byH[k] * 2;
-    lineal += qty * H / 12; pieces += qty;
-    html += "<tr><td>Stiles · " + fmtFrac(H, U) + '" tall</td><td><span class="prime">' + fmtFrac(H, U) +
-      '"</span></td><td>' + fmtFrac(H - 2 * t, U) + '"</td><td>' + qty + "</td></tr>";
-  });
-  html += "</tbody></table>";
-  html += '<div class="summary">' +
-    '<div><span class="k">Pieces</span><span class="v">' + pieces + "</span></div>" +
+  $("cutlist").innerHTML =
+    '<div class="summary" style="margin-top:0">' +
     '<div><span class="k">Lineal, net</span><span class="v">' + lineal.toFixed(1) + " ft</span></div>" +
-    '<div><span class="k">Order at +15%</span><span class="v">' + Math.ceil(lineal * 1.15) + " ft</span></div>" +
-    '<div><span class="k">Box sizes</span><span class="v">' + (widths.length * hKeys.length) + "</span></div></div>";
-  html += '<p class="note">All miters 45&deg;. Long point is the outside dimension, short point the inside.</p>';
-  $("cutlist").innerHTML = html;
+    '<div><span class="k">Order at +15%</span><span class="v">' + Math.ceil(lineal * 1.15) + " ft</span></div></div>" +
+    '<p class="note">Net is every rail and stile at its long point. Order adds 15% for drop, rounded up to the foot.</p>';
   $("cutPanel").hidden = false;
 }
 
@@ -1031,6 +1355,8 @@ function renderStack(){
   $("singleFields").hidden = !single;
   $("stackFields").hidden = single;
   $("baseHint").textContent = single ? "(drawing only)" : "(outlets are off the floor)";
+  $("mixedNote").hidden = !state.mixed;
+  $("wallHLab").textContent = state.mixed ? "Top of base to lowest ceiling" : "Top of base to ceiling";
   if(single) return;
   const st = solveStack(), host = $("stackOpts"), U = state.rez, def = STACKS[state.stack];
   host.innerHTML = "";
@@ -1071,10 +1397,11 @@ function stackBlock(st){
     return block;
   }
   const U = st.U;
-  let html = '<p class="runname">Stack — every column, every wall</p>' +
+  let html = '<p class="runname">' + (state.mixed ? "Stack — shared by every wall" : "Stack — every column, every wall") + "</p>" +
     '<p class="runmeta">Measured up from the top of the ' + fmtFrac(state.baseH) + '" base · ' +
     fmtFrac(st.vg / U, U) + '" between boxes · ' + fmtFrac(st.mB / U, U) + '" off the base · ' +
-    fmtFrac(st.topMargin, U) + '" to the ceiling</p>' +
+    fmtFrac(st.topMargin, U) + '" to the ' + (state.mixed ? "lowest ceiling" : "ceiling") +
+    (state.mixed ? " · higher walls add a box on top" : "") + "</p>" +
     '<table class="marks"><thead><tr><th>Box</th><th>Height</th><th>Bottom edge</th><th>Top edge</th></tr></thead><tbody>';
   st.boxes.forEach(function(b){
     html += "<tr><td class='no'>" + b.name + "</td><td>" + fmtFrac(b.h, U) + '"</td>' +
@@ -1134,7 +1461,9 @@ function bindSeg(id, key, attr, parse){
   });
 }
 bindSeg("rezSeg", "rez", "data-rez", function(v){ return parseInt(v, 10); });
-bindSeg("slideSeg", "slideMax", "data-slide", parseFloat);
+bindSeg("flexSeg", "flexMax", "data-flex", parseFloat);
+bindSeg("flexModeSeg", "flexMode", "data-mode", String);
+$("mixed").onchange = function(){ state.mixed = $("mixed").checked; refresh(); };
 
 $("cornerHalf").onchange = function(){
   state.cornerHalf = $("cornerHalf").checked;
@@ -1142,7 +1471,7 @@ $("cornerHalf").onchange = function(){
   refresh();
 };
 $("addRun").onclick = function(){
-  state.runs.push({ name:"Wall " + (state.runs.length + 1), L:120, left:"corner", right:"corner", obs:[], pick:null });
+  state.runs.push({ name:"Wall " + (state.runs.length + 1), L:120, left:"corner", right:"corner", obs:[], pick:null, ceil:null });
   refresh();
 };
 $("matchRoom").onclick = matchRoom;
@@ -1154,6 +1483,12 @@ function syncNotes(){
     ? "Boxes stop " + fmtFrac(g / 2) + '" off an inside corner, so the wrap reads as one ' + fmtFrac(g) +
       '" gap. Door and window casings get the full ' + fmtFrac(g) + '".'
     : "Every end gets the full " + fmtFrac(g) + '", so a corner reads as ' + fmtFrac(g * 2) + '" once it wraps.';
+  const flexOn = state.flexMax > 0;
+  $("flexModeRow").hidden = !flexOn;
+  $("flexNote").hidden = !flexOn;
+  $("flexNote").textContent = state.flexMode === "all"
+    ? "The box in the way shrinks and every other box on that wall shares the difference. Gaps and ends never change."
+    : "The box in the way shrinks and the box across the gap grows the same amount, so the gap just slides over. Gaps and ends never change.";
 }
 
 /* ============================ saved jobs ============================ */
@@ -1162,10 +1497,10 @@ const AUTO = "chalkline.autosave";
 
 function snapshot(){
   return {
-    v:2, when:Date.now(),
+    v:3, when:Date.now(),
     rez:state.rez, gap:state.gap, stock:state.stock, boxH:state.boxH, boxBottom:state.boxBottom,
     baseH:state.baseH, plateH:state.plateH, wMin:state.wMin, wMax:state.wMax, clear:state.clear,
-    slideMax:state.slideMax, cornerHalf:state.cornerHalf,
+    flexMax:state.flexMax, flexMode:state.flexMode, mixed:state.mixed, cornerHalf:state.cornerHalf,
     stack:state.stack, wallH:state.wallH, vgap:state.vgap, mBot:state.mBot, mTop:state.mTop, stackPick:state.stackPick,
     runs:state.runs
   };
@@ -1226,7 +1561,7 @@ $("loadPreset").onclick = function(){
 $("freshStart").onclick = function(){
   if(!confirm("Clear the current room and start over? Saved jobs are not affected.")) return;
   try{ localStorage.removeItem(AUTO); }catch(e){}
-  state.runs = [{ name:"Wall 1", L:120, left:"corner", right:"corner", obs:[], pick:null }];
+  state.runs = [{ name:"Wall 1", L:120, left:"corner", right:"corner", obs:[], pick:null, ceil:null }];
   pushToInputs(); refresh(); autoStamp();
 };
 $("delPreset").onclick = function(){
@@ -1241,9 +1576,13 @@ function pushToInputs(){
   Array.prototype.forEach.call($("rezSeg").querySelectorAll("button"), function(b){
     b.setAttribute("aria-pressed", String(parseInt(b.getAttribute("data-rez"), 10) === state.rez));
   });
-  Array.prototype.forEach.call($("slideSeg").querySelectorAll("button"), function(b){
-    b.setAttribute("aria-pressed", String(parseFloat(b.getAttribute("data-slide")) === state.slideMax));
+  Array.prototype.forEach.call($("flexSeg").querySelectorAll("button"), function(b){
+    b.setAttribute("aria-pressed", String(parseFloat(b.getAttribute("data-flex")) === state.flexMax));
   });
+  Array.prototype.forEach.call($("flexModeSeg").querySelectorAll("button"), function(b){
+    b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === state.flexMode));
+  });
+  $("mixed").checked = !!state.mixed;
 }
 
 /* ============================ boot ============================ */
